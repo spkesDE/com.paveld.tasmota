@@ -1,1 +1,0 @@
-﻿powershell "homey app run --trace-warnings --unhandled-rejections=strict 2>&1 | tee log.txt"

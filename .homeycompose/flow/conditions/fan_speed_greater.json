@@ -1,10 +1,10 @@
 {
     "id": "fan_speed_greater",
     "title": {
-        "en": "Fan speed is !{{greater | lower or equal}}"
+        "en": "Fan speed is !{{greater|lower or equal}}"
     },
     "titleFormatted": {
-        "en": "Fan speed is !{{greater | lower or equal}} to [[value]]"
+        "en": "Fan speed is !{{greater|lower or equal}} to [[value]]"
     },
     "args": [
         {

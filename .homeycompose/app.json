@@ -1,57 +1,58 @@
 {
-    "id": "com.paveld.tasmota",
-    "version": "0.10.2",
-    "compatibility": ">=5.0.0",
-    "sdk": 3,
-    "brandColor": "#42A3E9",
-    "name": {
-        "en": "Tasmota MQTT"
-    },
-    "description": {
-        "en": "Adding support for tasmota devices through MQTT"
-    },
-    "category": [
-        "appliances"
-    ],
-    "tags": {
-        "en": [
-            "tasmota",
-            "sonoff",
-            "sensor",
-            "zigbee",
-            "bridge"
-        ]
-    },
-    "permissions": [
-        "homey:app:nl.scanno.mqtt"
-    ],
-    "images": {
-        "small":    "/assets/images/small.png",
-        "large":    "/assets/images/large.png",
-        "xlarge":   "/assets/images/xlarge.png"
-    },
-    "author": {
+  "id": "com.paveld.tasmota",
+  "version": "0.11.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "brandColor": "#42A3E9",
+  "name": {
+    "en": "Tasmota MQTT"
+  },
+  "description": {
+    "en": "Adding support for tasmota devices through MQTT"
+  },
+  "category": [
+    "appliances"
+  ],
+  "tags": {
+    "en": [
+      "tasmota",
+      "sonoff",
+      "sensor",
+      "zigbee",
+      "bridge"
+    ]
+  },
+  "permissions": [
+    "homey:app:nl.scanno.mqtt"
+  ],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Julian Suhl",
+    "email": "julian@suhl.de"
+  },
+  "contributors": {
+    "developers": [
+      {
         "name": "Pavlo Dudnytskyi",
         "email": "paveldudn@gmail.com"
-    },
-    "contributors": {
-        "developers": [
-            {
-                "name": "Pavlo Dudnytskyi",
-                "email": "paveldudn@gmail.com"
-            }
-        ]
-    },
-    "source": "https://github.com/paveldn/homey-mqtt-tasmota",
-    "bugs": {
-        "url": "https://github.com/paveldn/homey-mqtt-tasmota/issues"
-    },
-    "homeyCommunityTopicId": 26164,
-    "contributing": {
-        "donate": {
-            "paypal": {
-                "username": "truemark"
-            }
-        }
+      }
+    ]
+  },
+  "source": "https://github.com/spkesDE/com.paveld.tasmota",
+  "bugs": {
+    "url": "https://github.com/spkesDE/com.paveld.tasmota/issues"
+  },
+  "support": "https://github.com/spkesDE/com.paveld.tasmota/issues",
+  "homeyCommunityTopicId": 26164,
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "spikes022"
+      }
     }
+  }
 }
