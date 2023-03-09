@@ -7,14 +7,34 @@ const Sensor = require('../../lib/sensor.js');
 
 class ZigbeeDevice extends GeneralTasmotaDevice {
     static additionalFields = ['BatteryPercentage', 'LinkQuality', 'LastSeen'];
-    #shootDeviceStatusRequest = null;
-    #sensorsCollected = [];
+    public getSettings: any;
+    public device_id: any;
+    public zigbee_timeout: any;
+    public lastSeen: any;
+    public sendMessage: any;
+    public log: any;
+    public supportIconChange: any;
+    public applyNewIcon: any;
+    public setSettings: any;
+    public swap_prefix_topic: any;
+    public setDeviceStatus: any;
+    public nextRequest: any;
+    public invalidateStatus: any;
+    public homey: any;
+    public hasCapability: any;
+    public getCapabilityValue: any;
+    public setCapabilityValue: any;
+    public stage: any;
+    public setAvailable: any;
+    public answerTimeout: any;
+    public debug: any;
+    public getMqttTopic: any;
 
-    onInit() {
+    async onInit() {
         let settings = this.getSettings();
         this.device_id = settings.zigbee_device_id;
         this.zigbee_timeout = settings.zigbee_timeout;
-        super.onInit();
+        await super.onInit();
         this.lastSeen = undefined;
     }
 
@@ -155,7 +175,7 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
                                 if (this.debug)
                                     throw(error);
                                 else
-                                    this.log(`While processing ${messageType}.${sensor}.${sensorField} error happened: ${error}`);
+                                    this.log(`While processing ${message}.${sensor}.${sensorField} error happened: ${error}`);
                             }
                         }
                     }

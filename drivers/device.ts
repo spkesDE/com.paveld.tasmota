@@ -2,23 +2,19 @@
 
 const Homey = require('homey');
 
-class GeneralTasmotaDevice extends Homey.Device {
-    // methoids that should be implement:
-    //  updateDevice
-    //  processMqttMessage
-
-    static getDriverIconFolder(driverName, absolutePath = true) {
+export default class GeneralTasmotaDevice extends Homey.Device {
+    static getDriverIconFolder(driverName: string, absolutePath = true) {
         if (absolutePath)
             return `/userdata/icons/${driverName}`;
         else
             return `../../../userdata/icons/${driverName}`
     }
 
-    static getDeviceIconFileName(deviceId) {
+    static getDeviceIconFileName(deviceId: string) {
         return `${deviceId}.svg`;
     }
 
-    sendMqttCommand(command, content) {
+    sendMqttCommand(command: string, content: any) {
         let topic = this.getMqttTopic();
         if (this.swap_prefix_topic)
             topic = topic + '/cmnd/' + command;
@@ -44,14 +40,14 @@ class GeneralTasmotaDevice extends Homey.Device {
         this.nextRequest = Date.now();
         this.updateInterval = settings.update_interval * 60 * 1000;
         this.timeoutInterval = 40 * 1000;
-        this.invalidateStatus(this.homey.__('device.unavailable.startup'));
+        await this.invalidateStatus(this.homey.__('device.unavailable.startup'));
     }
 
     getMqttTopic() {
         return this.getSettings()['mqtt_topic'];
     }
 
-    sendMessage(topic, message) {
+    sendMessage(topic: string, message: any) {
         this.sendMqttCommand(topic, message);
         let updateTm = Date.now() + this.timeoutInterval;
         if ((this.answerTimeout === undefined) || (updateTm < this.answerTimeout))
@@ -62,7 +58,7 @@ class GeneralTasmotaDevice extends Homey.Device {
         return `${GeneralTasmotaDevice.getDriverIconFolder(this.driver.manifest.id)}/${GeneralTasmotaDevice.getDeviceIconFileName(this.getData().id)}`;
     }
 
-    setDeviceStatus(newStatus) {
+    setDeviceStatus(newStatus: any) {
         // uncoment if you need to know who is calling function
         // this.log(`setDeviceStatus: ${JSON.stringify(this.getFunctionCallers(5))}`);
         if (this.stage !== newStatus) {
@@ -77,11 +73,11 @@ class GeneralTasmotaDevice extends Homey.Device {
         return this.driver.isDeviceSupportIconChange(this);
     }
 
-    checkDeviceStatus() {
+    async checkDeviceStatus() {
         let now = Date.now();
         if ((this.stage === 'available') && (this.answerTimeout !== undefined) && (now >= this.answerTimeout)) {
             this.setDeviceStatus('unavailable');
-            this.invalidateStatus(this.homey.__('device.unavailable.timeout'));
+            await this.invalidateStatus(this.homey.__('device.unavailable.timeout'));
         }
         if (now >= this.nextRequest) {
             this.nextRequest = now + this.updateInterval;
@@ -89,12 +85,15 @@ class GeneralTasmotaDevice extends Homey.Device {
         }
     }
 
-    invalidateStatus(message) {
-        this.setUnavailable(message);
+    async invalidateStatus(message: string) {
+        await this.setUnavailable(message);
         this.updateDevice();
     }
 
-    applyNewIcon(iconFile) {
+    updateDevice() {
+    }
+
+    applyNewIcon(iconFile: string) {
         let file = iconFile;
         if (file === 'default') {
             file = this.driver.getDefaultIcon(this.getSettings(), this.getCapabilities());
@@ -106,7 +105,7 @@ class GeneralTasmotaDevice extends Homey.Device {
         return file;
     }
 
-    async onSettings(event) {
+    async onSettings(event: any) {
         this.log(`onSettings: changes ${JSON.stringify(event.changedKeys)}`);
         if (event.changedKeys.includes('icon_file') && this.supportIconChange) {
             let iconFile = event.newSettings.icon_file;
@@ -130,7 +129,7 @@ class GeneralTasmotaDevice extends Homey.Device {
         this.driver.removeDeviceIcon(GeneralTasmotaDevice.getDeviceIconFileName(this.getData().id));
     }
 
-    async updateCapabilityValue(cap, value) {
+    async updateCapabilityValue(cap: string, value: any) {
         if (this.hasCapability(cap)) {
             let oldValue = this.getCapabilityValue(cap);
             //this.log(`updateCapabilityValue: ${cap}: ${oldValue} => ${value}`);
@@ -140,7 +139,7 @@ class GeneralTasmotaDevice extends Homey.Device {
         return false;
     }
 
-    getValueByPath(obj, path) {
+    getValueByPath(obj: any, path: any) {
         try {
             let currentObj = obj;
             let currentPathIndex = 0;
@@ -154,13 +153,13 @@ class GeneralTasmotaDevice extends Homey.Device {
         }
     }
 
-    onDeviceOffline() {
+    async onDeviceOffline() {
         this.setDeviceStatus('unavailable');
-        this.invalidateStatus(this.homey.__('device.unavailable.offline'));
+        await this.invalidateStatus(this.homey.__('device.unavailable.offline'));
         this.nextRequest = Date.now() + this.updateInterval;
     }
 
-    onMessage(topic, message, prefixFirst) {
+    async onMessage(topic, message, prefixFirst) {
         if (this.swap_prefix_topic === prefixFirst)
             return;
         this.log(`onMessage: ${topic} => ${JSON.stringify(message)}`);
@@ -169,7 +168,7 @@ class GeneralTasmotaDevice extends Homey.Device {
             return;
         try {
             if ((topicParts[2] === 'LWT') && (message === 'Offline')) {
-                this.onDeviceOffline();
+                await this.onDeviceOffline();
                 return;
             }
             if (this.stage === 'available') {

@@ -1,11 +1,8 @@
-'use strict';
+import GeneralTasmotaDevice from "../device";
+import Sensor from "../../lib/sensor";
 
-const Homey = require('homey');
-const Sensor = require('../../lib/sensor.js');
-const GeneralTasmotaDevice = require('../device.js');
 
 class TasmotaDevice extends GeneralTasmotaDevice {
-
     async onInit() {
         await super.onInit();
         let settings = this.getSettings();
@@ -37,9 +34,9 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 await this.addCapability('additional_sensors');
             this.sensorTrigger = this.homey.flow.getDeviceTriggerCard('sensor_value_changed');
         }
-        this.onOffList = this.getCapabilities().filter(cap => cap.startsWith('switch.'));
+        this.onOffList = this.getCapabilities().filter((cap: string) => cap.startsWith('switch.'));
         if (this.onOffList.length > 0) {
-            this.registerMultipleCapabilityListener(this.onOffList, (valueObj, optsObj) => {
+            this.registerMultipleCapabilityListener(this.onOffList, (valueObj: { [x: string]: any; }) => {
                 let capName = Object.keys(valueObj)[0];
                 let value = valueObj[capName] ? 'ON' : 'OFF';
                 let index = capName.slice(-1);
@@ -47,7 +44,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 this.sendTasmotaPowerCommand(index, value);
                 return Promise.resolve();
             }, 500);
-            this.registerCapabilityListener('onoff', (value, opts) => {
+            this.registerCapabilityListener('onoff', (value: any) => {
                 // this.log(`onoff cap: ${JSON.stringify(value)}`);
                 let message = value ? 'ON' : 'OFF';
                 for (let itemIndex = 1; itemIndex <= this.relaysCount; itemIndex++)
@@ -59,7 +56,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         this.isDimmable = false;
         if (this.hasCapability('fan_speed')) {
             this.hasFan = true;
-            this.registerCapabilityListener('fan_speed', (value, opts) => {
+            this.registerCapabilityListener('fan_speed', (value: any) => {
                 // this.log(`fan_speed cap: ${JSON.stringify(value)}`);
                 this.homey.flow.getDeviceTriggerCard('fan_speed_changed')
                     .trigger(this, {fan_speed: parseInt(value)}, {value});
@@ -71,7 +68,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         if (this.hasCapability('singlesocket')) {
             if (this.hasCapability('dim')) {
                 this.isDimmable = true;
-                this.registerCapabilityListener('dim', (value, opts) => {
+                this.registerCapabilityListener('dim', (value: any) => {
                     //this.log(`dim cap: ${JSON.stringify(value)}`);
                     this.sendMessage('Dimmer', Math.round(value * 100).toString());
                     return Promise.resolve();
@@ -79,7 +76,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
             }
             if (this.hasCapability('light_temperature')) {
                 this.hasLightTemperature = true;
-                this.registerCapabilityListener('light_temperature', (value, opts) => {
+                this.registerCapabilityListener('light_temperature', (value: any) => {
                     // this.log(`light_temperature cap: ${JSON.stringify(value)}`);
                     this.sendMessage('CT', Math.round(153 + 347 * value).toString());
                     return Promise.resolve();
@@ -87,7 +84,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
             }
             if (this.hasCapability('light_hue') && this.hasCapability('light_saturation')) {
                 this.hasLightColor = true;
-                this.registerMultipleCapabilityListener(['light_hue', 'light_saturation'], (valueObj, optsObj) => {
+                this.registerMultipleCapabilityListener(['light_hue', 'light_saturation'], (valueObj: any) => {
                     let hueVal = valueObj['light_hue'];
                     if (hueVal === undefined)
                         hueVal = this.getCapabilityValue('light_hue');
@@ -102,7 +99,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         }
         if (this.hasCapability('zigbee_pair')) {
             await this.setCapabilityValue('zigbee_pair', false);
-            this.registerCapabilityListener('zigbee_pair', (value, opts) => {
+            this.registerCapabilityListener('zigbee_pair', (value: any) => {
                 // this.log(`zigbee_pair cap: ${JSON.stringify(value)}`);
                 this.homey.flow.getDeviceTriggerCard('zigbee_pair_changed')
                     .trigger(this, {value: value});
@@ -124,8 +121,8 @@ class TasmotaDevice extends GeneralTasmotaDevice {
     }
 
     registerShuttersCapListeners() {
-        if (this.hasCapability('windowcoverings_state'))
-            this.registerCapabilityListener('windowcoverings_state', (value, opts) => {
+        if (this.hasCapability('windowcoverings_state')) {
+            this.registerCapabilityListener('windowcoverings_state', (value: string) => {
                 // this.log(`windowcoverings_state cap: ${JSON.stringify(value)}`);
                 try {
                     switch (value) {
@@ -139,7 +136,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                             this.sendMessage('ShutterPosition', 'DOWN');
                             break;
                         default:
-                            throw new Error('unknown value');
+                            this.error(new Error('unknown value'));
                     }
                 } catch (error) {
                     if (this.debug)
@@ -149,8 +146,9 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 }
                 return Promise.resolve();
             });
+        }
         if (this.hasCapability('windowcoverings_set'))
-            this.registerCapabilityListener('windowcoverings_set', (value, opts) => {
+            this.registerCapabilityListener('windowcoverings_set', (value: any) => {
                 //this.log(`windowcoverings_set cap: ${JSON.stringify(value)}`);
                 try {
                     let v = (value * 100);
@@ -167,7 +165,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
             });
     }
 
-    sendTasmotaPowerCommand(socketId, status) {
+    sendTasmotaPowerCommand(socketId: any, status: string) {
         let currentVal = this.getCapabilityValue('switch.' + socketId);
         if ((status === 'TOGGLE') ||
             ((status === 'ON') && !currentVal) ||
@@ -190,7 +188,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         return result;
     }
 
-    async powerReceived(topic, message) {
+    async powerReceived(topic: string, message: string) {
         if (!topic.startsWith('POWER'))
             return;
         this.log(`powerReceived: ${topic}  => ${message}`);
@@ -253,7 +251,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         }
     }
 
-    async processMqttMessage(topic, message) {
+    async processMqttMessage(topic: string, message: any) {
         let topicParts = topic.split('/');
         try {
             if (this.hasCapability('measure_signal_strength')) {
@@ -269,7 +267,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                     }
                 }
             }
-            let messageType = undefined;
+            let messageType: any = undefined;
             let root_topic = this.swap_prefix_topic ? topicParts[1] : topicParts[0];
             if (root_topic === 'tele') {
                 if (topicParts[2] === 'STATE')
@@ -404,7 +402,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 }
             }
             if ((messageType === 'Result') || (messageType === 'StatusSNS')) {
-                Sensor.forEachSensorValue(message, (path, value) => {
+                Sensor.forEachSensorValue(message, (path: any, value: any) => {
                     let capObj = Sensor.getPropertyObjectForSensorField(path, 'wired', true);
                     // this.log(`Sensor status: ${JSON.stringify(path)} => ${capObj ? JSON.stringify(capObj) : 'none'}`);
                     let sensorField = path[path.length - 1];
@@ -470,14 +468,14 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         }
     }
 
-    async checkSensorCapability(capName, newValue, sensorName, valueKind) {
+    async checkSensorCapability(capName: string, newValue: any, sensorName: string, valueKind: any) {
         // this.log(`checkSensorCapability: ${sensorName}.${valueKind} => ${newValue}`);
         let oldValue = this.getCapabilityValue(capName);
         await this.setCapabilityValue(capName, newValue).catch(this.error);
         if (oldValue !== newValue) {
-            if (typeof oldValue === "boolean")
+            if (oldValue instanceof Boolean)
                 oldValue = oldValue ? 1 : 0;
-            if (typeof newValue === "boolean")
+            if (newValue instanceof Boolean)
                 newValue = newValue ? 1 : 0;
             await this.sensorTrigger.trigger(this, {
                 sensor_name: sensorName,

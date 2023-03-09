@@ -5,13 +5,16 @@ const GeneralTasmotaDevice = require('./device.js');
 const fs = require('fs');
 
 class GeneralTasmotaDriver extends Homey.Driver {
-    // methoids that should be implement:
+
+    // methods that should be implement:
     //  pairingStarted - send command to start collect data
     //  pairingFinished - process collected data
-    #searchingDevices = false;
-    #messagesCounter = 0;
-    #messagesCollected = {};
-    #topicsToIgnore = [];
+    private searchingDevices = false;
+    private messagesCounter = 0;
+    private messagesCollected = {};
+    private topicsToIgnore = [];
+
+    private devicesCounter = 0;
 
     async onInit() {
         this.debug = this.homey.app.debug;
@@ -81,22 +84,22 @@ class GeneralTasmotaDriver extends Homey.Driver {
         if ((topicParts[0] === 'stat') || (topicParts[1] === 'stat')) {
             let swapPrefixTopic = topicParts[1] === 'stat';
             let deviceTopic = swapPrefixTopic ? topicParts[0] : topicParts[1];
-            if (!this.#topicsToIgnore.includes(deviceTopic)) {
-                if (!(deviceTopic in this.#messagesCollected))
-                    this.#messagesCollected[deviceTopic] = {
+            if (!this.topicsToIgnore.includes(deviceTopic)) {
+                if (!(deviceTopic in this.messagesCollected))
+                    this.messagesCollected[deviceTopic] = {
                         swapPrefixTopic: swapPrefixTopic,
                         messages: {}
                     };
                 for (const msgKey of Object.keys(message)) {
                     if (!Array.isArray(message[msgKey])) {
-                        if (!(msgKey in this.#messagesCollected[deviceTopic].messages))
-                            this.#messagesCollected[deviceTopic].messages[msgKey] = [];
-                        this.#messagesCollected[deviceTopic].messages[msgKey].push(message[msgKey]);
+                        if (!(msgKey in this.messagesCollected[deviceTopic].messages))
+                            this.messagesCollected[deviceTopic].messages[msgKey] = [];
+                        this.messagesCollected[deviceTopic].messages[msgKey].push(message[msgKey]);
                     } else {
-                        if (!(msgKey in this.#messagesCollected[deviceTopic].messages))
-                            this.#messagesCollected[deviceTopic].messages[msgKey] = message[msgKey];
+                        if (!(msgKey in this.messagesCollected[deviceTopic].messages))
+                            this.messagesCollected[deviceTopic].messages[msgKey] = message[msgKey];
                         else
-                            this.#messagesCollected[deviceTopic].messages[msgKey] = this.#messagesCollected[deviceTopic].messages[msgKey].concat(message[msgKey]);
+                            this.messagesCollected[deviceTopic].messages[msgKey] = this.messagesCollected[deviceTopic].messages[msgKey].concat(message[msgKey]);
                     }
                 }
             }
@@ -134,14 +137,14 @@ class GeneralTasmotaDriver extends Homey.Driver {
     }
 
     checkDeviceSearchStatus() {
-        if (this.checkDeviceSearchStatus.devicesCounter === undefined)
-            this.checkDeviceSearchStatus.devicesCounter = 0;
-        let devCount = Object.keys(this.#messagesCollected).length;
-        if (devCount === this.checkDeviceSearchStatus.devicesCounter) {
-            this.checkDeviceSearchStatus.devicesCounter = undefined;
+        if (this.devicesCounter === undefined)
+            this.devicesCounter = 0;
+        let devCount = Object.keys(this.messagesCollected).length;
+        if (devCount === this.devicesCounter) {
+            this.devicesCounter = undefined;
             return true;
         }
-        this.checkDeviceSearchStatus.devicesCounter = devCount;
+        this.devicesCounter = devCount;
         return false;
     }
 
@@ -159,11 +162,11 @@ class GeneralTasmotaDriver extends Homey.Driver {
     onPair(session) {
         this.log(`onPair called`);
         let driver = this;
-        let devices = {};
+        let devices = [];
         let selectedDevices = [];
         session.setHandler('list_devices', async (data) => {
             if (devices.length === 0) {
-                if (driver.#messagesCounter === 0)
+                if (driver.messagesCounter === 0)
                     return Promise.reject(new Error(driver.homey.__('mqtt_client.no_messages')));
                 else
                     return Promise.reject(new Error(driver.homey.__('mqtt_client.no_new_devices')));
@@ -204,19 +207,19 @@ class GeneralTasmotaDriver extends Homey.Driver {
             driver.log(`onPair current phase: "${viewId}"`);
             if (viewId === 'loading') {
                 if (!this.homey.app.clientAvailable || !driver.pairingStarted()) {
-                    this.#searchingDevices = false;
+                    this.searchingDevices = false;
                     return Promise.reject(new Error(driver.homey.__('mqtt_client.unavailable')));
                 }
-                this.#messagesCounter = 0;
-                this.#searchingDevices = true;
-                this.#topicsToIgnore = this.getTopicsToIgnore();
-                this.log(`Topics to ignore during pairing: ${JSON.stringify(this.#topicsToIgnore)}`);
+                this.messagesCounter = 0;
+                this.searchingDevices = true;
+                this.topicsToIgnore = this.getTopicsToIgnore();
+                this.log(`Topics to ignore during pairing: ${JSON.stringify(this.topicsToIgnore)}`);
                 let interval = setInterval((drvArg, sessionArg) => {
                     if (drvArg.checkDeviceSearchStatus()) {
                         clearInterval(interval);
-                        this.#searchingDevices = false;
-                        devices = drvArg.pairingFinished(this.#messagesCollected);
-                        this.#messagesCollected = {};
+                        this.searchingDevices = false;
+                        devices = drvArg.pairingFinished(this.messagesCollected);
+                        this.messagesCollected = {};
                         sessionArg.emit('list_devices', devices, function (error, result) {
                             if (result) {
                                 sessionArg.nextView()
@@ -251,8 +254,8 @@ class GeneralTasmotaDriver extends Homey.Driver {
 
     onMessage(topic, message, prefixFirst) {
         try {
-            if (this.#searchingDevices) {
-                this.#messagesCounter++;
+            if (this.searchingDevices) {
+                this.messagesCounter++;
                 this.collectPairingData(topic, message);
             }
             this.sendMessageToDevices(topic, message, prefixFirst);

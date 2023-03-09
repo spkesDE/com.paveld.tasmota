@@ -1,9 +1,17 @@
 import fs from "fs";
 import https from "https";
+import TasmotaMqttApp from "./app";
 
 const latestTasmotaReleaseFilename = './userdata/tasmota.ver';
 export default class TasmotaVersionChecker {
-    constructor(app) {
+    public app: any;
+    public tasmotaUpdateTrigger: any;
+    public lastTasmotaVersion: any;
+    public log: any;
+    public timeout: any;
+    public lastResponse: any;
+
+    constructor(app: TasmotaMqttApp) {
         this.app = app;
         this.tasmotaUpdateTrigger = this.app.homey.flow.getTriggerCard('new_tasmota_version');
         this.lastTasmotaVersion = this.loadTasmotaVersion();
@@ -15,14 +23,14 @@ export default class TasmotaVersionChecker {
         }, 300000);
     }
 
-    parseVersionString(versionString) {
-        const match = versionString.match(/^v(?<major>\d+)\.(?<minor>\d+)\.(?<revision>\d+)$/);
-        if (match === null)
+    parseVersionString(versionString: string) {
+        let match = versionString.match(/^v(?<major>\d+)\.(?<minor>\d+)\.(?<revision>\d+)$/);
+        if (match === null || match.groups === undefined)
             return null;
         return {major: match.groups.major, minor: match.groups.minor, revision: match.groups.revision}
     }
 
-    getAllFiles(dirPath, arrayOfFiles) {
+    getAllFiles(dirPath: string, arrayOfFiles: string[]) {
         let files = fs.readdirSync(dirPath);
         arrayOfFiles = arrayOfFiles || [];
         files.forEach(file => {
@@ -37,7 +45,7 @@ export default class TasmotaVersionChecker {
 
     async getLatestTasmotaVersion() {
         try {
-            const result = await this.makeHttpsRequest({
+            let result = await this.makeHttpsRequest({
                 host: 'api.github.com',
                 path: '/repos/arendst/tasmota/releases/latest',
                 method: 'GET',
@@ -47,8 +55,10 @@ export default class TasmotaVersionChecker {
             }, 2000).catch((error) => {
                 this.app.log(`makeHttpsRequest error: ${error}`);
             });
-            if (result.statusCode !== 200)
-                this.app.error(`Error while checking tasmota releases, staus: ${result.statusCode}`);
+            if (!result || result.statusCode !== 200) {
+                this.app.error(`Error while checking tasmota releases, staus: ${result?.statusCode}`);
+                return null;
+            }
             const info = JSON.parse(result.body);
             const version = this.parseVersionString(info.tag_name);
             if (version !== null)
@@ -60,7 +70,7 @@ export default class TasmotaVersionChecker {
         }
     }
 
-    saveTasmotaVersion(version) {
+    saveTasmotaVersion(version: any) {
         try {
             fs.writeFileSync(latestTasmotaReleaseFilename, `v${version.major}.${version.minor}.${version.revision}`, {encoding: 'utf8'});
         } catch (error) {
@@ -116,16 +126,19 @@ export default class TasmotaVersionChecker {
         }
     }
 
-    makeHttpsRequest(options, timeout) {
+    makeHttpsRequest(options: {}, timeout: number): Promise<{ statusCode: number, headers: any, body: any }> {
         return new Promise((resolve, reject) => {
-            const request = https.request(options, (res) => {
+            let request = https.request(options, (res) => {
                 let resBody = '';
                 res.on('data', (chunk) => {
                     resBody += chunk;
                 });
                 res.once('end', () => {
-                    res.body = resBody;
-                    return resolve(res); // resolve the request
+                    return resolve({
+                        statusCode: res.statusCode ?? 404,
+                        headers: res.headers,
+                        body: resBody
+                    }); // resolve the request
                 });
             });
             request.setTimeout(timeout || this.timeout, () => {

@@ -2,7 +2,7 @@
   "name": "com.paveld.tasmota",
   "version": "1.0.0",
   "description": "This lightweight Homey device application adds tasmota devices support through MQTT protocol. It uses Menno van Grinsven's MQTT Client to communicate with MQTT broker, so client should be already installed and configured.\r Current version of application supports onoff capability for single or multiple sockets devices, power monitoring, dim, light_temperature, light_hue and light_saturation capabilities for single socket devices.",
-  "main": "app.js",
+  "main": "app.ts",
   "directories": {
     "lib": "lib"
   },
@@ -13,7 +13,8 @@
   "license": "ISC",
   "devDependencies": {
     "@tsconfig/node12": "^1.0.11",
-    "@types/homey": "npm:homey-apps-sdk-v3-types@^0.3.3",
-    "@types/node": "^18.14.0"
+    "@types/homey": "npm:homey-apps-sdk-v3-types@^0.3.1",
+    "@types/node": "^18.11.17",
+    "typescript": "^4.9.4"
   }
 }

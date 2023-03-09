@@ -1,23 +1,29 @@
-'use strict';
+import Homey from 'homey';
+import TasmotaVersionChecker from "./tasmotaVersionChecker";
 
-const Homey = require('homey');
-const fs = require('fs');
-const https = require('https');
-const TasmotaVersionChecker = require("./tasmotaVersionChecker");
-
-class TasmotaMqttApp extends Homey.App {
+export default class TasmotaMqttApp extends Homey.App {
+    private MQTTClient: any;
+    private clientAvailable: boolean = false;
+    private applicationVersion: any;
+    private debug: boolean = false;
+    private applicationName: string = 'TasmotaMqtt';
+    private versionChecker!: TasmotaVersionChecker;
+    private topics: string[] = [];
+    private drivers: { [p: string]: any } = {};
+    private lastMqttMessage: any;
+    private checkConnection!: NodeJS.Timeout;
 
     connectMqttClient() {
         this.MQTTClient = this.homey.api.getApiApp('nl.scanno.mqtt');
         this.MQTTClient
             .on('install', () => this.register())
             .on('uninstall', () => this.unregister())
-            .on('realtime', (topic, message) => {
+            .on('realtime', (topic: any, message: any) => {
                 this.onMessage(topic, message);
             });
         try {
             this.MQTTClient.getInstalled()
-                .then(installed => {
+                .then((installed: any) => {
                     this.clientAvailable = installed;
                     this.log(`MQTT client status: ${this.clientAvailable}`);
                     if (installed) {
@@ -26,7 +32,7 @@ class TasmotaMqttApp extends Homey.App {
                             this.log(`MQTT client installed, version: ${version}`);
                         });
                     }
-                }).catch((error) => {
+                }).catch((error: Error) => {
                 this.log(`MQTT client app error: ${error}`);
             });
         } catch (error) {
@@ -36,13 +42,11 @@ class TasmotaMqttApp extends Homey.App {
     }
 
 
-
-
     async onInit() {
         try {
             this.applicationVersion = Homey.manifest.version;
-            this.debug = process.env.DEBUG == 1;
-            this.applicationName = Homey.manifest.name.en;
+            this.debug = !!process.env.DEBUG;
+            this.applicationName = Homey.manifest.name.en
         } catch (error) {
             this.applicationVersion = undefined;
             this.debug = false;
@@ -63,8 +67,8 @@ class TasmotaMqttApp extends Homey.App {
         this.connectMqttClient();
         this.log(`${this.applicationName} is running. Version: ${this.applicationVersion}, debug: ${this.debug}`);
         if (this.debug)
-            this.log(`All files in app: ${this.getAllFiles("./userdata", [])}`);
-        this.checkConnection = setInterval(() => {
+            this.log(`All files in app: ${this.versionChecker.getAllFiles("./userdata", [])}`);
+        this.checkConnection = this.homey.setInterval(() => {
             try {
                 if ((this.lastMqttMessage !== undefined) && (Date.now() - this.lastMqttMessage > 10 * 60 * 1000)) {
                     this.log(`MQTT connection timeout. Resetting connection`);
@@ -81,7 +85,7 @@ class TasmotaMqttApp extends Homey.App {
 
     }
 
-    onMessage(topic, message) {
+    onMessage(topic: string, message: string) {
         let topicParts = topic.split('/');
         if (topicParts.length > 1) {
             this.lastMqttMessage = Date.now();
@@ -93,21 +97,21 @@ class TasmotaMqttApp extends Homey.App {
         }
     }
 
-    subscribeTopic(topicName) {
+    subscribeTopic(topicName: string) {
         if (!this.clientAvailable)
             return;
-        return this.MQTTClient.post('subscribe', {topic: topicName}, error => {
+        return this.MQTTClient.post('subscribe', {topic: topicName}, (error: Error) => {
             if (error) {
-                this.log(`Can not subscrive to topic ${topicName}, error: ${error}`)
+                this.log(`Can not subscribe to topic ${topicName}, error: ${error}`)
             } else {
-                this.log(`Sucessfully subscribed to topic: ${topicName}`);
+                this.log(`Successfully subscribed to topic: ${topicName}`);
             }
-        }).catch(error => {
+        }).catch((error: Error) => {
             this.log(`Error while subscribing to ${topicName}. ${error}`);
         });
     }
 
-    sendMessage(topic, payload) {
+    sendMessage(topic: string, payload: string) {
         this.log(`sendMessage: ${topic} <= ${payload}`);
         if (!this.clientAvailable)
             return;
@@ -116,10 +120,10 @@ class TasmotaMqttApp extends Homey.App {
             retain: false,
             mqttTopic: topic,
             mqttMessage: payload
-        }, error => {
+        }, (error: Error) => {
             if (error)
                 this.log(`Error sending ${topic} <= "${payload}"`);
-        }).catch(error => {
+        }).catch((error: Error) => {
             this.log(`Error while sending ${topic} <= "${payload}". ${error}`);
         });
     }
@@ -135,7 +139,7 @@ class TasmotaMqttApp extends Homey.App {
         }
         let now = Date.now();
         Object.keys(this.drivers).forEach((driverId) => {
-            this.drivers[driverId].getDevices().forEach((device) => {
+            this.drivers[driverId].getDevices().forEach((device: any) => {
                 device.nextRequest = now;
             });
             this.drivers[driverId].updateDevices();
