@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.paveld.tasmota",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#42A3E9",
@@ -1729,6 +1729,15 @@
         "en": "kWh"
       },
       "icon": "assets/icons/capabilities/power_meter.svg"
+    },
+    "multiplesockets": {
+      "type": "boolean",
+      "title": {
+        "en": "Switch"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": null
     },
     "onoff": {
       "type": "boolean",
