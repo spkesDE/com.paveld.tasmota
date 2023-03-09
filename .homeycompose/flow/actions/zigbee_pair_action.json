@@ -3,6 +3,9 @@
 	"title": {
 		"en": "Set Zigbee permit join"
 	},
+	"titleFormatted": {
+		"en": "Set Zigbee permit join [[permission]]"
+	},
 	"args": [
 		{
 			"name": "device",

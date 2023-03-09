@@ -3,6 +3,9 @@
     "title": {
         "en": "Fan speed is !{{greater | lower or equal}}"
     },
+    "titleFormatted": {
+        "en": "Fan speed is !{{greater | lower or equal}} to [[value]]"
+    },
     "args": [
         {
             "name": "device",

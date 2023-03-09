@@ -143,7 +143,7 @@
           {
             "name": "device",
             "type": "device",
-            "filter": "capabilities=measure_last_seen"
+            "filter": "driver_id=tasmota_mqtt|tasmota_zigbee&capabilities=measure_last_seen"
           }
         ],
         "tokens": [
@@ -250,6 +250,9 @@
         "id": "multiplesockets_relay_state_changed",
         "title": {
           "en": "Socket status changed"
+        },
+        "titleFormatted": {
+          "en": "Socket [[socket_id]] status changed to [[state]]"
         },
         "args": [
           {
@@ -415,6 +418,9 @@
         "title": {
           "en": "Socket status changed"
         },
+        "titleFormatted": {
+          "en": "Socket status changed to [[state]]"
+        },
         "args": [
           {
             "name": "device",
@@ -486,6 +492,9 @@
         "title": {
           "en": "Dim level is !{{greater|lower or equal}}"
         },
+        "titleFormatted": {
+          "en": "Dim level is !{{greater|lower or equal}} to [[value]]"
+        },
         "args": [
           {
             "name": "device",
@@ -507,6 +516,9 @@
         "id": "dim_level_lower",
         "title": {
           "en": "Dim level is !{{lower|greater or equal}}"
+        },
+        "titleFormatted": {
+          "en": "Dim level is !{{lower|greater or equal}} to [[value]]"
         },
         "args": [
           {
@@ -530,6 +542,9 @@
         "title": {
           "en": "Fan speed is !{{greater | lower or equal}}"
         },
+        "titleFormatted": {
+          "en": "Fan speed is !{{greater | lower or equal}} to [[value]]"
+        },
         "args": [
           {
             "name": "device",
@@ -550,6 +565,9 @@
         "id": "fan_speed_lower",
         "title": {
           "en": "Fan speed is !{{lower | greater or equal}}"
+        },
+        "titleFormatted": {
+          "en": "Fan speed is !{{lower | greater or equal}} to [[value]]"
         },
         "args": [
           {
@@ -598,6 +616,9 @@
         "title": {
           "en": "Socket state is !{{on|off}}"
         },
+        "titleFormatted": {
+          "en": "Socket [[socket_id]] state is !{{on|off}}"
+        },
         "args": [
           {
             "name": "device",
@@ -633,6 +654,9 @@
         "title": {
           "en": "Set fan speed"
         },
+        "titleFormatted": {
+          "en": "Set fan speed to [[value]]"
+        },
         "args": [
           {
             "name": "device",
@@ -653,6 +677,9 @@
         "id": "multiplesockets_switch_action",
         "title": {
           "en": "Change socket(s) state"
+        },
+        "titleFormatted": {
+          "en": "Change socket [[socket_id]] state to [[state]]"
         },
         "args": [
           {
@@ -698,6 +725,9 @@
         "title": {
           "en": "Change socket state"
         },
+        "titleFormatted": {
+          "en": "Change socket state to [[state]]"
+        },
         "args": [
           {
             "name": "device",
@@ -734,6 +764,9 @@
         "id": "zigbee_pair_action",
         "title": {
           "en": "Set Zigbee permit join"
+        },
+        "titleFormatted": {
+          "en": "Set Zigbee permit join [[permission]]"
         },
         "args": [
           {

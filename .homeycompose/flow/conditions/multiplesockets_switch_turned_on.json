@@ -3,6 +3,9 @@
     "title": {
         "en": "Socket state is !{{on|off}}"
     },
+    "titleFormatted": {
+        "en": "Socket [[socket_id]] state is !{{on|off}}"
+    },
     "args": [
         {
             "name": "device",

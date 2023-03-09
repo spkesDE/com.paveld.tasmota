@@ -1,18 +1,21 @@
 {
-    "id": "dim_level_lower",
-    "title": {
-        "en": "Dim level is !{{lower|greater or equal}}"
+  "id": "dim_level_lower",
+  "title": {
+    "en": "Dim level is !{{lower|greater or equal}}"
+  },
+  "titleFormatted": {
+    "en": "Dim level is !{{lower|greater or equal}} to [[value]]"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=tasmota_mqtt&capabilities=dim"
     },
-    "args": [
-        {
-            "name": "device",
-            "type": "device",
-            "filter": "driver_id=tasmota_mqtt&capabilities=dim"
-        },
-        {
-            "name": "value",
-            "type": "range",
-            "min": 0,
+    {
+      "name": "value",
+      "type": "range",
+      "min": 0,
             "max": 100,
             "step": 1,
             "label": "%",

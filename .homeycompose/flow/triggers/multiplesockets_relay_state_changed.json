@@ -1,61 +1,64 @@
 {
-    "id": "multiplesockets_relay_state_changed",
-    "title": {
-        "en": "Socket status changed"
+  "id": "multiplesockets_relay_state_changed",
+  "title": {
+    "en": "Socket status changed"
+  },
+  "titleFormatted": {
+    "en": "Socket [[socket_id]] status changed to [[state]]"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=tasmota_mqtt&capabilities=multiplesockets"
     },
-    "args": [
+    {
+      "name": "socket_id",
+      "type": "autocomplete",
+      "placeholder": {
+        "en": "Select one of the values"
+      }
+    },
+    {
+      "name": "state",
+      "type": "dropdown",
+      "values": [
         {
-            "name": "device",
-            "type": "device",
-            "filter": "driver_id=tasmota_mqtt&capabilities=multiplesockets"
+          "id": "state_any",
+          "label": {
+            "en": "toggled"
+          }
         },
         {
-            "name": "socket_id",
-            "type": "autocomplete",
-            "placeholder": {
-                "en": "Select one of the values"
-            }
+          "id": "state_on",
+          "label": {
+            "en": "turned on"
+          }
         },
         {
-            "name": "state",
-            "type": "dropdown",
-            "values": [
-                {
-                    "id": "state_any",
-                    "label": {
-                        "en": "toggled"
-                    }
-                },
-                {
-                    "id": "state_on",
-                    "label": {
-                        "en": "turned on"
-                    }
-                },
-                {
-                    "id": "state_off",
-                    "label": {
-                        "en": "turned off"
-                    }
-                }
-            ]
+          "id": "state_off",
+          "label": {
+            "en": "turned off"
+          }
         }
-    ],
-    "tokens": [
-        {
-            "name": "socket_index",
-            "type": "number",
-            "title": {
-                "en": "Socket index"
-            },
-            "example": 2
-        },
-        {
-            "name": "socket_state",
-            "type": "boolean",
-            "title": {
-                "en": "Socket state"
-            }
-        }
-    ]
+      ]
+    }
+  ],
+  "tokens": [
+    {
+      "name": "socket_index",
+      "type": "number",
+      "title": {
+        "en": "Socket index"
+      },
+      "example": 2
+    },
+    {
+      "name": "socket_state",
+      "type": "boolean",
+      "title": {
+        "en": "Socket state"
+      }
+    }
+  ]
 }

@@ -1,23 +1,23 @@
 {
-    "id": "measure_last_seen_changed",
-    "title": {
-        "en": "Last seen changed"
-    },
-    "args": [
-        {
-            "name": "device",
-            "type": "device",
-            "filter": "capabilities=measure_last_seen"
-        }
-    ],
-    "tokens": [
-        {
-            "name": "value",
-            "type": "number",
-            "title": {
-                "en": "Seen seconds ago"
-            },
-            "example": 46
-        }
-    ]
+  "id": "measure_last_seen_changed",
+  "title": {
+    "en": "Last seen changed"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=tasmota_mqtt|tasmota_zigbee&capabilities=measure_last_seen"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "value",
+      "type": "number",
+      "title": {
+        "en": "Seen seconds ago"
+      },
+      "example": 46
+    }
+  ]
 }

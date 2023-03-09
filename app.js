@@ -4,7 +4,7 @@ const Homey = require('homey');
 const fs = require('fs');
 const https = require('https');
 
-const latestTasmotaReleaseFilename = '/userdata/tasmota.ver';
+const latestTasmotaReleaseFilename = './userdata/tasmota.ver';
 
 class TasmotaMqttApp extends Homey.App {
     makeHttpsRequest(options, timeout) {
@@ -180,7 +180,7 @@ class TasmotaMqttApp extends Homey.App {
         this.connectMqttClient();
         this.log(`${this.applicationName} is running. Version: ${this.applicationVersion}, debug: ${this.debug}`);
         if (this.debug)
-            this.log(`All files in app: ${this.getAllFiles("/userdata/", [])}`);
+            this.log(`All files in app: ${this.getAllFiles("/userdata", [])}`);
         this.lastTasmotaVersion = this.loadTasmotaVersion();
         this.tasmotaUpdateTrigger = this.homey.flow.getTriggerCard('new_tasmota_version');
         setTimeout(() => {

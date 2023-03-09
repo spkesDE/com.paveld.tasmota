@@ -3,6 +3,9 @@
     "title": {
         "en": "Socket status changed"
     },
+    "titleFormatted": {
+        "en": "Socket status changed to [[state]]"
+    },
     "args": [
         {
             "name": "device",

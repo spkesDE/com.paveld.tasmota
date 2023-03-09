@@ -3,6 +3,9 @@
     "title": {
         "en": "Dim level is !{{greater|lower or equal}}"
     },
+    "titleFormatted": {
+        "en": "Dim level is !{{greater|lower or equal}} to [[value]]"
+    },
     "args": [
         {
             "name": "device",

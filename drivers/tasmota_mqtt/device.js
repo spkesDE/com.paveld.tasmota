@@ -124,43 +124,47 @@ class TasmotaDevice extends GeneralTasmotaDevice {
     }
 
     registerShuttersCapListeners() {
-        this.registerCapabilityListener('windowcoverings_state', (value, opts) => {
-            // this.log(`windowcoverings_state cap: ${JSON.stringify(value)}`);
-            try {
-                switch (value) {
-                    case "idle":
-                        this.sendMessage('ShutterPosition', 'STOP');
-                        break;
-                    case "up":
-                        this.sendMessage('ShutterPosition', 'UP');
-                        break;
-                    case "down":
-                        this.sendMessage('ShutterPosition', 'DOWN');
-                        break;
-                    default:
-                        throw new Error('unknown value');
+        if (this.hasCapability('windowcoverings_state'))
+            this.registerCapabilityListener('windowcoverings_state', (value, opts) => {
+                // this.log(`windowcoverings_state cap: ${JSON.stringify(value)}`);
+                try {
+                    switch (value) {
+                        case "idle":
+                            this.sendMessage('ShutterPosition', 'STOP');
+                            break;
+                        case "up":
+                            this.sendMessage('ShutterPosition', 'UP');
+                            break;
+                        case "down":
+                            this.sendMessage('ShutterPosition', 'DOWN');
+                            break;
+                        default:
+                            throw new Error('unknown value');
+                    }
+                } catch (error) {
+                    if (this.debug)
+                        throw(error);
+                    else
+                        this.log(`Error happened while processing capability "windowcoverings_state" value "${value}", error ${error}`);
                 }
-            } catch (error) {
-                if (this.debug)
-                    throw(error);
-                else
-                    this.log(`Error happened while processing capability "windowcoverings_state" value "${value}", error ${error}`);
-            }
-            return Promise.resolve();
-        });
-        this.registerCapabilityListener('windowcoverings_set', (value, opts) => {
-            //this.log(`windowcoverings_set cap: ${JSON.stringify(value)}`);
-            try {
-
-                this.sendMessage('ShutterPosition', (value * 100).toString());
-            } catch (error) {
-                if (this.debug)
-                    throw(error);
-                else
-                    this.log(`Error happened while processing capability "windowcoverings_set" value "${value}", error ${error}`);
-            }
-            return Promise.resolve();
-        });
+                return Promise.resolve();
+            });
+        if (this.hasCapability('windowcoverings_set'))
+            this.registerCapabilityListener('windowcoverings_set', (value, opts) => {
+                //this.log(`windowcoverings_set cap: ${JSON.stringify(value)}`);
+                try {
+                    let v = (value * 100);
+                    if (v > 1) v = 1;
+                    if (v < 0) v = 0;
+                    this.sendMessage('ShutterPosition', v.toString());
+                } catch (error) {
+                    if (this.debug)
+                        throw(error);
+                    else
+                        this.log(`Error happened while processing capability "windowcoverings_set" value "${value}", error ${error}`);
+                }
+                return Promise.resolve();
+            });
     }
 
     sendTasmotaPowerCommand(socketId, status) {
@@ -231,7 +235,10 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 await trigger.trigger(this, {
                     socket_index: parseInt(socketIndex),
                     socket_state: newState
-                }, {socket_id: {name: 'socket ' + socketIndex}, state: newState ? 'state_on' : 'state_off'});
+                }, {
+                    socket_id: {name: 'socket ' + socketIndex},
+                    state: newState ? 'state_on' : 'state_off'
+                }).catch(this.error);
         } catch (error) {
             if (this.debug)
                 throw(error);
@@ -258,7 +265,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                         await this.setCapabilityValue('measure_signal_strength', signal);
                         if (oldValue !== signal)
                             await this.homey.flow.getDeviceTriggerCard('measure_signal_strength_changed')
-                                .trigger(this, {value: signal}, {signal});
+                                .trigger(this, {value: signal}, {signal}).catch(this.error);
                     }
                 }
             }
@@ -290,7 +297,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                                 try {
                                     if (await this.updateCapabilityValue('fan_speed', value.toString()))
                                         await this.homey.flow.getDeviceTriggerCard('fan_speed_changed')
-                                            .trigger(this, {fan_speed: parseInt(value)}, {value});
+                                            .trigger(this, {fan_speed: parseInt(value)}, {value}).catch(this.error);
                                 } catch (error) {
                                     if (this.debug)
                                         throw(error);
@@ -378,7 +385,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                                 if (zbStateVal !== undefined) {
                                     if (await this.updateCapabilityValue('zigbee_pair', zbStateVal)) {
                                         await this.homey.flow.getDeviceTriggerCard('zigbee_pair_changed')
-                                            .trigger(this, {value: zbStateVal});
+                                            .trigger(this, {value: zbStateVal}).catch(this.error);
                                     }
                                 }
                             }
@@ -466,7 +473,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
     async checkSensorCapability(capName, newValue, sensorName, valueKind) {
         // this.log(`checkSensorCapability: ${sensorName}.${valueKind} => ${newValue}`);
         let oldValue = this.getCapabilityValue(capName);
-        await this.setCapabilityValue(capName, newValue);
+        await this.setCapabilityValue(capName, newValue).catch(this.error);
         if (oldValue !== newValue) {
             if (typeof oldValue === "boolean")
                 oldValue = oldValue ? 1 : 0;
@@ -477,7 +484,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 sensor_value_kind: valueKind,
                 sensor_value_new: Number(newValue),
                 sensor_value_old: Number(oldValue)
-            }, {newValue});
+            }, {newValue}).catch(this.error);
             return true;
         }
         return false;

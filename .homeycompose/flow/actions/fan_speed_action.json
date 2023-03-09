@@ -3,6 +3,9 @@
     "title": {
         "en": "Set fan speed"
     },
+    "titleFormatted": {
+        "en": "Set fan speed to [[value]]"
+    },
     "args": [
         {
             "name": "device",

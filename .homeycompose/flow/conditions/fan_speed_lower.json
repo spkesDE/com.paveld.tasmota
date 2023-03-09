@@ -1,18 +1,21 @@
 {
-    "id": "fan_speed_lower",
-    "title": {
-        "en": "Fan speed is !{{lower | greater or equal}}"
+  "id": "fan_speed_lower",
+  "title": {
+    "en": "Fan speed is !{{lower | greater or equal}}"
+  },
+  "titleFormatted": {
+    "en": "Fan speed is !{{lower | greater or equal}} to [[value]]"
+  },
+  "args": [
+    {
+      "name": "device",
+      "type": "device",
+      "filter": "driver_id=tasmota_mqtt&capabilities=fan_speed"
     },
-    "args": [
-        {
-            "name": "device",
-            "type": "device",
-            "filter": "driver_id=tasmota_mqtt&capabilities=fan_speed"
-        },
-        {
-            "name": "value",
-            "type": "range",
-            "min": 0,
+    {
+      "name": "value",
+      "type": "range",
+      "min": 0,
             "max": 3,
             "step": 1,
             "labelDecimals": 0

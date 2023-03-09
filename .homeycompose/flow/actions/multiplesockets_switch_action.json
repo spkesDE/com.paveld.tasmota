@@ -3,6 +3,9 @@
     "title": {
         "en": "Change socket(s) state"
     },
+    "titleFormatted": {
+        "en": "Change socket [[socket_id]] state to [[state]]"
+    },
     "args": [
         {
             "name": "device",
