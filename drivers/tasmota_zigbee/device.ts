@@ -1,41 +1,17 @@
-'use strict';
-
-const GeneralTasmotaDevice = require('../device.js');
-const Sensor = require('../../lib/sensor.js');
-
-//const Utils = require('../../lib/utils.js');
+import GeneralTasmotaDevice from "../device";
+import Sensor from "../../lib/sensor";
 
 class ZigbeeDevice extends GeneralTasmotaDevice {
     static additionalFields = ['BatteryPercentage', 'LinkQuality', 'LastSeen'];
-    public getSettings: any;
-    public device_id: any;
-    public zigbee_timeout: any;
-    public lastSeen: any;
-    public sendMessage: any;
-    public log: any;
-    public supportIconChange: any;
-    public applyNewIcon: any;
-    public setSettings: any;
-    public swap_prefix_topic: any;
-    public setDeviceStatus: any;
-    public nextRequest: any;
-    public invalidateStatus: any;
-    public homey: any;
-    public hasCapability: any;
-    public getCapabilityValue: any;
-    public setCapabilityValue: any;
-    public stage: any;
-    public setAvailable: any;
-    public answerTimeout: any;
-    public debug: any;
-    public getMqttTopic: any;
+    private device_id: any;
+    private zigbee_timeout: any;
+    private lastSeen: Date | undefined;
 
     async onInit() {
         let settings = this.getSettings();
         this.device_id = settings.zigbee_device_id;
         this.zigbee_timeout = settings.zigbee_timeout;
         await super.onInit();
-        this.lastSeen = undefined;
     }
 
     getDeviceId() {
@@ -46,19 +22,19 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
         this.sendMessage('ZbStatus3', this.getDeviceId());
     }
 
-    async onSettings(event) {
-        this.log(`onSettings: changes ${JSON.stringify(event.changedKeys)}`);
-        if (event.changedKeys.includes('icon_file') && this.supportIconChange) {
-            let iconFile = event.newSettings.icon_file;
+    async onSettings(settings: { oldSettings: any, newSettings: any, changedKeys: string[] }): Promise<string | void> {
+        this.log(`onSettings: changes ${JSON.stringify(settings.changedKeys)}`);
+        if (settings.changedKeys.includes('icon_file') && this.supportIconChange) {
+            let iconFile = settings.newSettings.icon_file;
             let realFile = this.applyNewIcon(iconFile);
             if (iconFile !== realFile)
                 setTimeout(() => {
                     this.setSettings({icon_file: realFile});
                 }, 200);
         }
-        if (event.changedKeys.includes('mqtt_topic') || event.changedKeys.includes('swap_prefix_topic') || event.changedKeys.includes('zigbee_device_id')) {
-            this.swap_prefix_topic = event.newSettings.swap_prefix_topic;
-            this.device_id = event.newSettings.zigbee_device_id;
+        if (settings.changedKeys.includes('mqtt_topic') || settings.changedKeys.includes('swap_prefix_topic') || settings.changedKeys.includes('zigbee_device_id')) {
+            this.swap_prefix_topic = settings.newSettings.swap_prefix_topic;
+            this.device_id = settings.newSettings.zigbee_device_id;
             this.lastSeen = undefined;
             setTimeout(() => {
                 this.setDeviceStatus('init');
@@ -66,8 +42,8 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
                 this.invalidateStatus(this.homey.__('device.unavailable.update'));
             }, 3000);
         }
-        if (event.changedKeys.includes('zigbee_timeout')) {
-            this.zigbee_timeout = event.newSettings.zigbee_timeout;
+        if (settings.changedKeys.includes('zigbee_timeout')) {
+            this.zigbee_timeout = settings.newSettings.zigbee_timeout;
             this.nextRequest = Date.now();
         }
     }
@@ -89,25 +65,25 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
             this.setDeviceStatus('available');
             await this.setAvailable();
         }
-        super.checkDeviceStatus();
+        await super.checkDeviceStatus();
         let now = Date.now();
         if (this.lastSeen !== undefined) {
             await this.updateLastSeen();
-            if ((this.answerTimeout === undefined) || (now < this.answerTimeout)) {
+            if ((this.answerTimeout === 0) || (now < this.answerTimeout)) {
                 try {
                     if (this.zigbee_timeout > 0) {
                         let timeout = new Date(this.lastSeen.getTime() + this.zigbee_timeout * 60 * 1000);
                         let device_valid = timeout.getTime() >= now;
                         if ((this.stage === 'available') && !device_valid) {
                             this.setDeviceStatus('unavailable');
-                            this.invalidateStatus(this.homey.__('device.unavailable.timeout'));
+                            await this.invalidateStatus(this.homey.__('device.unavailable.timeout'));
                         } else if ((this.stage === 'unavailable') && device_valid) {
                             this.setDeviceStatus('available');
-                            this.setAvailable();
+                            await this.setAvailable();
                         }
                     } else if (this.stage === 'unavailable') {
                         this.setDeviceStatus('available');
-                        this.setAvailable();
+                        await this.setAvailable();
                     }
                 } catch (error) {
                     if (this.debug)
@@ -119,32 +95,32 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
         }
     }
 
-    checkSensorCapability(capName, newValue, sensorName, valueKind) {
+    async checkSensorCapability(capName: string, newValue: any, sensorName: string, valueKind: any) {
         // this.log(`checkSensorCapability: ${sensorName}.${valueKind} => ${newValue}`);
-        let oldValue = this.getCapabilityValue(capName);
-        return this.setCapabilityValue(capName, newValue);
+        await this.setCapabilityValue(capName, newValue);
+        return true;
     }
 
-    onDeviceOffline() {
+    async onDeviceOffline() {
         this.lastSeen = undefined;
-        super.onDeviceOffline();
+        await super.onDeviceOffline();
     }
 
-    async processMqttMessage(topic, message) {
+    async processMqttMessage(topic: string, message: any) {
         try {
             let topicParts = topic.split('/');
-            let is_object = typeof message === 'object';
+            let is_object = message instanceof Object;
             if ((topicParts.length > 3) && (topicParts[3] === 'ZbReceived')) {
                 this.lastSeen = new Date();
                 await this.updateLastSeen();
             }
             if (is_object) {
-                let tmp_message = {};
+                let tmp_message: any = {};
                 tmp_message[this.getDeviceId()] = message;
-                let m_message = {};
+                let m_message: any = {};
                 m_message[this.getMqttTopic()] = tmp_message;
-                let updatedCap = [];
-                Sensor.forEachSensorValue(m_message, (path, value) => {
+                let updatedCap: string[] = [];
+                Sensor.forEachSensorValue(m_message, async (path: any, value: any) => {
                     let capObj = Sensor.getPropertyObjectForSensorField(path, 'zigbee', true);
                     let sensorField = path[path.length - 1];
                     let sensor = "";
@@ -155,9 +131,9 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
                             let lSeen = new Date(parseInt(value) * 1000);
                             if ((lSeen !== this.lastSeen) || (this.stage === 'unavailable')) {
                                 this.lastSeen = lSeen;
-                                this.answerTimeout = undefined;
+                                this.answerTimeout = 0;
                             }
-                            this.checkDeviceStatus();
+                            await this.checkDeviceStatus();
                         }
                     } catch (error) {
                         if (this.debug)
@@ -169,7 +145,7 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
 
                             try {
                                 let sensorFieldValue = capObj.value_converter != null ? capObj.value_converter(value) : value;
-                                if (this.checkSensorCapability(capObj.capability, sensorFieldValue, sensor, sensorField))
+                                if (await this.checkSensorCapability(capObj.capability, sensorFieldValue, sensor, sensorField))
                                     updatedCap.push(`${capObj.capability} <= ${sensorFieldValue}`);
                             } catch (error) {
                                 if (this.debug)

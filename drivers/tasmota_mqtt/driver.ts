@@ -1,11 +1,5 @@
-'use strict';
-'use strict';
-
-const Homey = require('homey');
-
-const TasmotaDevice = require('./device.js');
-const Sensor = require('../../lib/sensor.js');
-const GeneralTasmotaDriver = require('../driver.js');
+import GeneralTasmotaDriver from "../driver";
+import Sensor from "../../lib/sensor";
 
 class TasmotaDeviceDriver extends GeneralTasmotaDriver {
 
@@ -16,14 +10,14 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
 
 
     registerRunListeners() {
-        this.homey.flow.getConditionCard('dim_level_greater').registerRunListener((args, state) => {
+        this.homey.flow.getConditionCard('dim_level_greater').registerRunListener((args: any, state: any) => {
             return Promise.resolve(args.device.getCapabilityValue('dim') * 100 > args.value);
         });
-        this.homey.flow.getConditionCard('dim_level_lower').registerRunListener((args, state) => {
+        this.homey.flow.getConditionCard('dim_level_lower').registerRunListener((args: any, state: any) => {
             return Promise.resolve(args.device.getCapabilityValue('dim') * 100 < args.value);
         });
         let multiSocketTrigger = this.homey.flow.getDeviceTriggerCard('multiplesockets_relay_state_changed');
-        multiSocketTrigger.registerRunListener((args, state) => {
+        multiSocketTrigger.registerRunListener((args: any, state: any) => {
             return Promise.resolve(((args.socket_id.name === 'any socket') || (args.socket_id.name === state.socket_id.name)) &&
                 ((args.state === 'state_any') || (args.state === state.state)));
         });
@@ -129,20 +123,6 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         });
     }
 
-    onMapDeviceClass(device) {
-        this.log(`Mapping device "${device.getName()}"`);
-        // Sending SetOption59 to improve tele/* update behaviour for some HA implementation
-        let settings = device.getSettings();
-        let topic = settings.mqtt_topic;
-        let command = 'SetOption59';
-        if (settings.swap_prefix_topic)
-            topic = topic + '/cmnd/' + command;
-        else
-            topic = 'cmnd/' + topic + '/' + command;
-        this.sendMessage(topic, '1');
-        return TasmotaDevice;
-    }
-
     pairingStarted() {
         this.log('pairingStarted called');
         this.sendMessage('cmnd/sonoffs/Status', '0');
@@ -152,7 +132,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         return true;
     }
 
-    getDefaultIcon(settings, capabilities) {
+    getDefaultIcon(settings: any, capabilities: string[]) {
         if (capabilities.includes('zigbee_pair'))
             return 'zigbee_bridge.svg';
         if (capabilities.includes('multiplesockets'))
@@ -171,9 +151,9 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         return 'tasmota.svg';
     }
 
-    collectedDataToDevice(deviceTopic, messages, swapPrefixTopic) {
+    collectedDataToDevice(deviceTopic: any, messages: any, swapPrefixTopic: any) {
         this.log(`collectedDataToDevice: ${JSON.stringify(deviceTopic)} => ${JSON.stringify(messages)}`);
-        let devItem = {
+        let devItem: any = {
             name: "",
             settings: {
                 mqtt_topic: deviceTopic,
@@ -217,8 +197,8 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         let shutters = 0;
         if ('StatusSNS' in messages) {
             // Sensors and shutters
-            let sensors_settings = {};
-            Sensor.forEachSensorValue(messages['StatusSNS'][0], (path, value) => {
+            let sensors_settings: any = {};
+            Sensor.forEachSensorValue(messages['StatusSNS'][0], (path: any, value: any) => {
                 let sensorField = path[path.length - 1];
                 let sensor = "";
                 if (path.length > 1)
@@ -228,7 +208,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                 if (capObj !== null) {
                     this.log(`getPropertyObjectForSensorField: ${JSON.stringify(capObj)}`);
                     devItem.capabilities.push(capObj.capability);
-                    let capSettings = {};
+                    let capSettings: any = {};
                     if (capObj.units) {
                         let units = capObj.units.default;
                         const units_field = capObj.units.units_field;
@@ -326,9 +306,9 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         return devItem;
     }
 
-    pairingFinished(messagesCollected) {
+    pairingFinished(messagesCollected: any) {
         this.log('pairingFinished called');
-        let devices = [];
+        let devices: any = [];
         Object.keys(messagesCollected).sort().forEach(key => {
             let devItem = this.collectedDataToDevice(key, messagesCollected[key].messages, messagesCollected[key].swapPrefixTopic);
             if (devItem !== null)

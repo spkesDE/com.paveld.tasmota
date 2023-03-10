@@ -1,12 +1,9 @@
-'use strict';
+import GeneralTasmotaDriver from "../driver";
+import Sensor from "../../lib/sensor";
+import GeneralTasmotaDevice from "../device";
 
-const Homey = require('homey');
-const GeneralTasmotaDriver = require('../driver.js');
-const Sensor = require('../../lib/sensor.js');
-const ZigbeeDevice = require('./device.js');
-
-class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
-    static specialSensors = {
+export default class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
+    static specialSensors: any = {
         'lumi.sensor_wleak.aq1': {
             'attributes': {'0500<00': "000000FF0000"} // "010000FF0000" - on / "000000FF0000" - off
         },
@@ -17,13 +14,9 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
             'attributes': {'Contact': "0"}
         },
     };
-    public log: any;
-    public sendMessage: any;
-    public getDevices: any;
-    public debug: any;
 
-    onInit() {
-        super.onInit();
+    async onInit() {
+        await super.onInit();
     }
 
     pairingStarted() {
@@ -39,10 +32,10 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
         return [];
     }
 
-    sendMessageToDevices(topic, message, prefixFirst) {
+    sendMessageToDevices(topic: string, message: { ZbReceived: { [x: string]: any; }; ZbStatus3: { [x: string]: any; }; }, prefixFirst: boolean) {
         let topicParts = topic.split('/');
         let topicIndex = prefixFirst ? 1 : 0;
-        let devices = this.getDevices();
+        let devices: any = this.getDevices();
         if ((topicParts.length > 2) && (topicParts[2] === 'LWT')) {
             for (let index = 0; index < devices.length; index++)
                 if (devices[index].getMqttTopic() === topicParts[topicIndex]) {
@@ -80,7 +73,7 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
         }
     }
 
-    collectPairingData(topic, message) {
+    collectPairingData(topic: string, message: { ZbStatus1: { [x: string]: { Device: any; }; }; }) {
         let topicParts = topic.split('/');
         if ((topicParts[0] === 'stat') || (topicParts[1] === 'stat')) {
             let swapPrefixTopic = topicParts[1] === 'stat';
@@ -105,11 +98,11 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
         }
     }
 
-    getDefaultIcon(settings, capabilities) {
+    getDefaultIcon(settings: any, capabilities: any) {
         return 'zigbee_sensor.svg';
     }
 
-    collectedDataToDevices(deviceTopic, messages, swapPrefixTopic) {
+    collectedDataToDevices(deviceTopic: string, messages: any, swapPrefixTopic: any) {
         if (!('ZbStatus3' in messages))
             return [];
         let result = [];
@@ -128,29 +121,29 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
                 message = {...ZigbeeDeviceDriver.specialSensors[model].attributes, ...message};
             if ('Manufacturer' in message)
                 model = `${model} (${message.Manufacturer})`;
-            let dname = ('Name' in message) ? message.Name : `Sensor ${deviceId}`;
+            let deviceName: string = ('Name' in message) ? message.Name : `Sensor ${deviceId}`;
             let devItem = {
                 data: {id: deviceAddr},
-                name: dname,
+                name: deviceName,
                 settings: {
                     mqtt_topic: deviceTopic,
                     swap_prefix_topic: swapPrefixTopic,
                     zigbee_device_id: deviceId,
                     chip_type: model
                 },
-                capabilities: [],
+                capabilities: [""],
                 capabilitiesOptions: {},
                 class: 'sensor',
                 icon: 'icons/zigbee_sensor.svg'
             };
             this.log(`Message: ${JSON.stringify(message)}`);
-            let msgObj = {'ZbReceived': {}};
+            let msgObj: any = {'ZbReceived': {}};
             let capCounter = 0;
             msgObj.ZbReceived[deviceId] = message;
             message = msgObj;   // Mimic to zbreceived message
-            let supportedAttributes = {};
-            let dev_icon = undefined;
-            Sensor.forEachSensorValue(message, (path, value) => {
+            let supportedAttributes: any = {};
+            let dev_icon: string = "";
+            Sensor.forEachSensorValue(message, (path: any, value: any) => {
                 try {
                     let field = path[path.length - 1];
                     let capObj = Sensor.getPropertyObjectForSensorField(path, 'zigbee', false, deviceId);
@@ -160,9 +153,9 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
                             'capability': capObj,
                             'path': path
                         };
-                        if (!dev_icon && capObj.icon)
+                        if (dev_icon === "" && capObj.icon)
                             dev_icon = capObj.icon;
-                        if (!ZigbeeDevice.additionalFields.includes(field))
+                        if (!GeneralTasmotaDevice.additionalFields.includes(field))
                             capCounter++;
                     }
                 } catch (error) {
@@ -185,10 +178,10 @@ class ZigbeeDeviceDriver extends GeneralTasmotaDriver {
         return result;
     }
 
-    pairingFinished(messagesCollected) {
+    pairingFinished(messagesCollected: any) {
         this.log('pairingFinished called');
         this.log(`pairingFinished: messages collected ${JSON.stringify(messagesCollected)}`);
-        let devices = [];
+        let devices: any = [];
         Object.keys(messagesCollected).sort().forEach(key => {
             let devItems = this.collectedDataToDevices(key, messagesCollected[key].messages, messagesCollected[key].swapPrefixTopic);
             devices = devices.concat(devItems);

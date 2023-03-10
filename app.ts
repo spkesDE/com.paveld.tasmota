@@ -3,9 +3,9 @@ import TasmotaVersionChecker from "./tasmotaVersionChecker";
 
 export default class TasmotaMqttApp extends Homey.App {
     private MQTTClient: any;
-    private clientAvailable: boolean = false;
+    clientAvailable: boolean = false;
     private applicationVersion: any;
-    private debug: boolean = false;
+    debug: boolean = false;
     private applicationName: string = 'TasmotaMqtt';
     private versionChecker!: TasmotaVersionChecker;
     private topics: string[] = [];
@@ -67,7 +67,7 @@ export default class TasmotaMqttApp extends Homey.App {
         this.connectMqttClient();
         this.log(`${this.applicationName} is running. Version: ${this.applicationVersion}, debug: ${this.debug}`);
         if (this.debug)
-            this.log(`All files in app: ${this.versionChecker.getAllFiles("./userdata", [])}`);
+            this.log(`All files in app: ${this.versionChecker.getAllFiles("/userdata", [])}`);
         this.checkConnection = this.homey.setInterval(() => {
             try {
                 if ((this.lastMqttMessage !== undefined) && (Date.now() - this.lastMqttMessage > 10 * 60 * 1000)) {

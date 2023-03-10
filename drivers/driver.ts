@@ -1,23 +1,27 @@
-'use strict';
+import GeneralTasmotaDevice from "./device";
+import fs from "fs";
+import PairSession from "homey/lib/PairSession";
+import Homey, {FlowCardTrigger} from "homey";
+import TasmotaMqttApp from "../app";
 
-const Homey = require('homey');
-const GeneralTasmotaDevice = require('./device.js');
-const fs = require('fs');
-
-class GeneralTasmotaDriver extends Homey.Driver {
+export default class GeneralTasmotaDriver extends Homey.Driver {
 
     // methods that should be implement:
     //  pairingStarted - send command to start collect data
     //  pairingFinished - process collected data
     private searchingDevices = false;
     private messagesCounter = 0;
-    private messagesCollected = {};
-    private topicsToIgnore = [];
+    debug: boolean = false;
+    private messagesCollected: any = {};
 
     private devicesCounter = 0;
+    private topicsToIgnore: string[] = [];
+    private checkDevices!: NodeJS.Timer;
+    private isIconChangeSupported: boolean = false;
+    private deviceConnectionTrigger!: FlowCardTrigger;
 
     async onInit() {
-        this.debug = this.homey.app.debug;
+        this.debug = (this.homey.app as TasmotaMqttApp).debug;
         this.log(`${this.constructor.name} has been initiated, driver id: ${this.manifest.id}, driver name: ${this.manifest.name.en}`);
         this.checkDevices = setInterval(() => {
             try {
@@ -29,7 +33,6 @@ class GeneralTasmotaDriver extends Homey.Driver {
                     this.log(`${this.constructor.name} checkDevices error: ${error}`);
             }
         }, 30000);
-        this.isIconChangeSupported = false;
         for (let settingsIndex = 0; !this.isIconChangeSupported && (settingsIndex < this.manifest.settings.length); settingsIndex++) {
             if (this.manifest.settings[settingsIndex].id === 'icon_file') {
                 this.isIconChangeSupported = true;
@@ -42,11 +45,11 @@ class GeneralTasmotaDriver extends Homey.Driver {
         this.deviceConnectionTrigger = this.homey.flow.getTriggerCard('device_connection_changed');
     }
 
-    getDefaultIcon(settings, capabilities) {
+    getDefaultIcon(settings: any, capabilities: any) {
         return 'tasmota.svg';
     }
 
-    removeDeviceIcon(iconFileName) {
+    removeDeviceIcon(iconFileName: string) {
         let driverIconFolder = GeneralTasmotaDevice.getDriverIconFolder(this.manifest.id, true);
         try {
             fs.unlinkSync(`${driverIconFolder}/${iconFileName}`);
@@ -58,8 +61,8 @@ class GeneralTasmotaDriver extends Homey.Driver {
         let driverIconFolder = GeneralTasmotaDevice.getDriverIconFolder(this.manifest.id, true);
         try {
             let iconFiles = fs.readdirSync(driverIconFolder);
-            let usedIcons = [];
-            this.getDevices().forEach(device => {
+            let usedIcons: string[] = [];
+            this.getDevices().forEach((device: any) => {
                 if (this.isDeviceSupportIconChange(device))
                     usedIcons.push(GeneralTasmotaDevice.getDeviceIconFileName(device.getData().id));
             });
@@ -75,15 +78,15 @@ class GeneralTasmotaDriver extends Homey.Driver {
         }
     }
 
-    isDeviceSupportIconChange(device) {
+    isDeviceSupportIconChange(device: any) {
         return this.isIconChangeSupported && fs.existsSync(device.getDeviceIconFileName());
     }
 
-    collectPairingData(topic, message) {
+    collectPairingData(topic: string, message: any) {
         let topicParts = topic.split('/');
         if ((topicParts[0] === 'stat') || (topicParts[1] === 'stat')) {
             let swapPrefixTopic = topicParts[1] === 'stat';
-            let deviceTopic = swapPrefixTopic ? topicParts[0] : topicParts[1];
+            let deviceTopic: string = swapPrefixTopic ? topicParts[0] : topicParts[1] ?? "";
             if (!this.topicsToIgnore.includes(deviceTopic)) {
                 if (!(deviceTopic in this.messagesCollected))
                     this.messagesCollected[deviceTopic] = {
@@ -107,20 +110,20 @@ class GeneralTasmotaDriver extends Homey.Driver {
     }
 
     getTopicsToIgnore() {
-        let result = [];
-        this.getDevices().forEach(device => {
+        let result: string[] = [];
+        this.getDevices().forEach((device: any) => {
             result.push(device.getMqttTopic());
         });
         return result;
     }
 
     updateDevices() {
-        this.getDevices().forEach(device => {
+        this.getDevices().forEach((device: any) => {
             device.checkDeviceStatus();
         });
     }
 
-    onDeviceStatusChange(device, newStatus, oldStatus) {
+    onDeviceStatusChange(device: any, newStatus: string, oldStatus: string) {
         if ((oldStatus === 'unavailable') && (newStatus === 'available')) {
             this.deviceConnectionTrigger.trigger({
                 name: device.getName(),
@@ -137,18 +140,16 @@ class GeneralTasmotaDriver extends Homey.Driver {
     }
 
     checkDeviceSearchStatus() {
-        if (this.devicesCounter === undefined)
-            this.devicesCounter = 0;
         let devCount = Object.keys(this.messagesCollected).length;
         if (devCount === this.devicesCounter) {
-            this.devicesCounter = undefined;
+            this.devicesCounter = 0;
             return true;
         }
         this.devicesCounter = devCount;
         return false;
     }
 
-    setNewDeviceIcon(iconFile, deviceIcon) {
+    setNewDeviceIcon(iconFile: string, deviceIcon: string) {
         try {
             fs.unlinkSync(deviceIcon);
         } catch (error) {
@@ -159,19 +160,18 @@ class GeneralTasmotaDriver extends Homey.Driver {
         }
     }
 
-    onPair(session) {
+    onPair(session: PairSession) {
         this.log(`onPair called`);
-        let driver = this;
-        let devices = [];
-        let selectedDevices = [];
+        let devices: any[] = [];
+        let selectedDevices: any[] = [];
         session.setHandler('list_devices', async (data) => {
             if (devices.length === 0) {
-                if (driver.messagesCounter === 0)
-                    return Promise.reject(new Error(driver.homey.__('mqtt_client.no_messages')));
+                if (this.messagesCounter === 0)
+                    return Promise.reject(new Error(this.homey.__('mqtt_client.no_messages')));
                 else
-                    return Promise.reject(new Error(driver.homey.__('mqtt_client.no_new_devices')));
+                    return Promise.reject(new Error(this.homey.__('mqtt_client.no_new_devices')));
             }
-            driver.log(`list_devices: New devices found: ${JSON.stringify(devices)}`);
+            this.log(`list_devices: New devices found: ${JSON.stringify(devices)}`);
             return devices;
         });
         session.setHandler("list_devices_selection", async (devices) => {
@@ -204,46 +204,38 @@ class GeneralTasmotaDriver extends Homey.Driver {
             return selectedDevices;
         });
         session.setHandler('showView', async (viewId) => {
-            driver.log(`onPair current phase: "${viewId}"`);
+            this.log(`onPair current phase: "${viewId}"`);
             if (viewId === 'loading') {
-                if (!this.homey.app.clientAvailable || !driver.pairingStarted()) {
+                if (!(this.homey.app as TasmotaMqttApp).clientAvailable) {
                     this.searchingDevices = false;
-                    return Promise.reject(new Error(driver.homey.__('mqtt_client.unavailable')));
+                    return Promise.reject(new Error(this.homey.__('mqtt_client.unavailable')));
                 }
                 this.messagesCounter = 0;
                 this.searchingDevices = true;
                 this.topicsToIgnore = this.getTopicsToIgnore();
                 this.log(`Topics to ignore during pairing: ${JSON.stringify(this.topicsToIgnore)}`);
-                let interval = setInterval((drvArg, sessionArg) => {
+                let interval = setInterval((drvArg: any, sessionArg) => {
                     if (drvArg.checkDeviceSearchStatus()) {
                         clearInterval(interval);
                         this.searchingDevices = false;
                         devices = drvArg.pairingFinished(this.messagesCollected);
                         this.messagesCollected = {};
-                        sessionArg.emit('list_devices', devices, function (error, result) {
-                            if (result) {
-                                sessionArg.nextView()
-                            } else {
-                                sessionArg.alert('Can not show devices list', null, function () {
-                                    sessionArg.done()
-                                });
-                            }
-                        });
+                        sessionArg.emit('list_devices', devices);
                         sessionArg.nextView();
                     }
-                }, 2000, driver, session);
+                }, 2000, this, session);
             }
         });
     }
 
-    sendMessage(topic, payload) {
-        this.homey.app.sendMessage(topic, payload);
+    sendMessage(topic: string, payload: any) {
+        (this.homey.app as TasmotaMqttApp).sendMessage(topic, payload);
     }
 
-    sendMessageToDevices(topic, message, prefixFirst) {
+    sendMessageToDevices(topic: string, message: any, prefixFirst: boolean) {
         let topicParts = topic.split('/');
         let topicIndex = prefixFirst ? 1 : 0;
-        let devices = this.getDevices();
+        let devices: any = this.getDevices();
         for (let index = 0; index < devices.length; index++)
             if (devices[index].getMqttTopic() === topicParts[topicIndex]) {
                 devices[index].onMessage(topic, message, prefixFirst);
@@ -252,7 +244,7 @@ class GeneralTasmotaDriver extends Homey.Driver {
 
     }
 
-    onMessage(topic, message, prefixFirst) {
+    onMessage(topic: string, message: any, prefixFirst: boolean) {
         try {
             if (this.searchingDevices) {
                 this.messagesCounter++;

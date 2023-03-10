@@ -1,27 +1,41 @@
 import GeneralTasmotaDevice from "../device";
 import Sensor from "../../lib/sensor";
+import {FlowCardTriggerDevice} from "homey";
 
 
 class TasmotaDevice extends GeneralTasmotaDevice {
+    private additionalSensors: boolean = false;
+    private isDimmable: boolean = false;
+    private relaysCount: number = 0;
+    private shouldUpdateOnOff: boolean = false;
+    private shuttersNumber: number = 0;
+    private sockets!: any[];
+    private socketsList!: any[];
+    private hasFan: boolean = false;
+    private onOffList: string[] = [];
+    private hasLightColor: boolean = false;
+    private hasLightTemperature: boolean = false;
+    private sensorTrigger!: FlowCardTriggerDevice;
+
     async onInit() {
         await super.onInit();
         let settings = this.getSettings();
         this.relaysCount = parseInt(settings.relays_number);
         this.additionalSensors = (settings.additional_sensors !== '') || (settings.pwr_monitor === 'Yes');
         this.shouldUpdateOnOff = false;
-        this.shuttersNubmber = parseInt(settings.shutters_number);
+        this.shuttersNumber = parseInt(settings.shutters_number);
         this.sockets = [];
         this.socketsList = [];
         // Legacy devices conversion
         for (let i = 1; i <= this.relaysCount; i++) {
             this.sockets.push(false);
-            let capname = 'onoff.' + i.toString();
-            if (this.hasCapability(capname))
-                await this.removeCapability(capname);
-            capname = 'switch.' + i.toString();
-            if (!this.hasCapability(capname)) {
-                await this.addCapability(capname);
-                await this.setCapabilityOptions(capname, {title: {en: 'switch ' + i.toString()}});
+            let capName = 'onoff.' + i.toString();
+            if (this.hasCapability(capName))
+                await this.removeCapability(capName);
+            capName = 'switch.' + i.toString();
+            if (!this.hasCapability(capName)) {
+                await this.addCapability(capName);
+                await this.setCapabilityOptions(capName, {title: {en: 'switch ' + i.toString()}});
             }
         }
         if (!this.hasCapability('onoff') && (this.relaysCount > 0))
@@ -108,7 +122,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
             });
 
         }
-        if (this.shuttersNubmber > 0) {
+        if (this.shuttersNumber > 0) {
             this.registerShuttersCapListeners();
         }
     }
@@ -424,7 +438,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                         }
                     } else {
                         // Special cases
-                        if ((sensor === 'Shutter1') && (this.shuttersNubmber > 0) && (value != null) && (value !== 'null')) {
+                        if ((sensor === 'Shutter1') && (this.shuttersNumber > 0) && (value != null) && (value !== 'null')) {
                             // Only Shutter1 is supported
                             try {
                                 switch (sensorField) {
@@ -469,7 +483,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
     }
 
     async checkSensorCapability(capName: string, newValue: any, sensorName: string, valueKind: any) {
-        // this.log(`checkSensorCapability: ${sensorName}.${valueKind} => ${newValue}`);
+        //this.log(`checkSensorCapability: ${sensorName}.${valueKind} => ${newValue}`);
         let oldValue = this.getCapabilityValue(capName);
         await this.setCapabilityValue(capName, newValue).catch(this.error);
         if (oldValue !== newValue) {
@@ -477,12 +491,13 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 oldValue = oldValue ? 1 : 0;
             if (newValue instanceof Boolean)
                 newValue = newValue ? 1 : 0;
-            await this.sensorTrigger.trigger(this, {
-                sensor_name: sensorName,
-                sensor_value_kind: valueKind,
-                sensor_value_new: Number(newValue),
-                sensor_value_old: Number(oldValue)
-            }, {newValue}).catch(this.error);
+            if (this.sensorTrigger != undefined)
+                this.sensorTrigger.trigger(this, {
+                    sensor_name: sensorName,
+                    sensor_value_kind: valueKind,
+                    sensor_value_new: Number(newValue),
+                    sensor_value_old: Number(oldValue)
+                }, {newValue}).catch(this.error);
             return true;
         }
         return false;
