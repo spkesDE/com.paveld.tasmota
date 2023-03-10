@@ -1,8 +1,9 @@
-import fs from "fs";
-import https from "https";
+const fs = require("fs");
+const https = require("https");
 
 const latestTasmotaReleaseFilename = './userdata/tasmota.ver';
-export default class TasmotaVersionChecker {
+
+class TasmotaVersionChecker {
     constructor(app) {
         this.app = app;
         this.tasmotaUpdateTrigger = this.app.homey.flow.getTriggerCard('new_tasmota_version');

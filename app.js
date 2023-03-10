@@ -1,9 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const fs = require('fs');
-const https = require('https');
-const TasmotaVersionChecker = require("./tasmotaVersionChecker");
+const TasmotaVersionChecker = require("./tasmotaVersionChecker.js");
 
 class TasmotaMqttApp extends Homey.App {
 
@@ -63,7 +61,7 @@ class TasmotaMqttApp extends Homey.App {
         this.connectMqttClient();
         this.log(`${this.applicationName} is running. Version: ${this.applicationVersion}, debug: ${this.debug}`);
         if (this.debug)
-            this.log(`All files in app: ${this.getAllFiles("./userdata", [])}`);
+            this.log(`All files in app: ${this.versionChecker.getAllFiles("/userdata", [])}`);
         this.checkConnection = setInterval(() => {
             try {
                 if ((this.lastMqttMessage !== undefined) && (Date.now() - this.lastMqttMessage > 10 * 60 * 1000)) {
