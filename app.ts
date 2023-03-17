@@ -87,7 +87,7 @@ export default class TasmotaMqttApp extends Homey.App {
     private checkConnection() {
         this.checkConnectionInterval = this.homey.setInterval(async () => {
             if ((this.lastMqttMessage !== undefined && (Date.now() - this.lastMqttMessage > 10 * 60 * 1000)) || !this.clientAvailable) {
-                this.log(`MQTT connection timeout. Resetting connection`);
+                this.log(`MQTT connection timeout or not available. Resetting connection`);
                 this.lastMqttMessage = undefined;
                 await this.connectMqttClient();
             }
@@ -109,19 +109,19 @@ export default class TasmotaMqttApp extends Homey.App {
                 resolve(false);
             }
             this.MQTTClient
-                .on('install', () => this.register())
-                .on('uninstall', () => this.unregister())
+                .on('install', () => this.registerToTopics())
+                .on('uninstall', () => this.disableMqttClient())
                 .on('realtime', (topic: any, message: any) => {
                     this.onMessage(topic, message);
                 });
             this.clientAvailable = true;
             this.log(`MQTT client status: ${await this.MQTTClient.getInstalled().catch(this.error)} - ${await this.MQTTClient.getVersion().catch(this.error)}`);
-            this.register();
+            this.registerToTopics();
             resolve(true);
         });
     }
 
-    private register() {
+    private registerToTopics() {
         // Subscribing to system topic to check if connection still alive (update ~10 second for mosquitto)
         this.subscribeToTopic("$SYS/broker/uptime");
         this.lastMqttMessage = Date.now();
@@ -138,7 +138,7 @@ export default class TasmotaMqttApp extends Homey.App {
         });
     }
 
-    private unregister() {
+    private disableMqttClient() {
         this.clientAvailable = false;
         this.lastMqttMessage = undefined;
         this.log(`${this.constructor.name} unregister called`);

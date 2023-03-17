@@ -1,33 +1,36 @@
 import fs from "fs";
 import https from "https";
 import TasmotaMqttApp from "./app";
+import {FlowCardTrigger} from "homey";
 
-const latestTasmotaReleaseFilename = './userdata/tasmota.ver';
+const latestTasmotaReleaseFilename = '/userdata/tasmota.ver';
 export default class TasmotaVersionChecker {
-    public app: any;
-    public tasmotaUpdateTrigger: any;
-    public lastTasmotaVersion: any;
-    public log: any;
-    public timeout: any;
-    public lastResponse: any;
+    public app: TasmotaMqttApp;
+    public tasmotaUpdateTrigger: FlowCardTrigger;
+    public lastTasmotaVersion: { major: number, minor: number, revision: number };
 
     constructor(app: TasmotaMqttApp) {
         this.app = app;
         this.tasmotaUpdateTrigger = this.app.homey.flow.getTriggerCard('new_tasmota_version');
-        this.lastTasmotaVersion = this.loadTasmotaVersion();
+        this.lastTasmotaVersion = this.loadTasmotaVersionFromFile();
         setTimeout(() => {
             this.checkTasmotaReleases().then();
             setInterval(() => {
                 this.checkTasmotaReleases().then();
             }, 86400000); // Check for new tasmota releases once per day
         }, 300000);
+        app.log(`Tasmota Version Checker initialized. Latest Tasmota Version - v${this.lastTasmotaVersion.major}.${this.lastTasmotaVersion.minor}.${this.lastTasmotaVersion.revision}`);
     }
 
-    parseVersionString(versionString: string) {
+    parseVersionString(versionString: string): { major: number, minor: number, revision: number } {
         let match = versionString.match(/^v(?<major>\d+)\.(?<minor>\d+)\.(?<revision>\d+)$/);
         if (match === null || match.groups === undefined)
-            return null;
-        return {major: match.groups.major, minor: match.groups.minor, revision: match.groups.revision}
+            return {major: 0, minor: 0, revision: 0};
+        return {
+            major: Number(match.groups.major),
+            minor: Number(match.groups.minor),
+            revision: Number(match.groups.revision)
+        }
     }
 
     getAllFiles(dirPath: string, arrayOfFiles: string[]) {
@@ -44,7 +47,6 @@ export default class TasmotaVersionChecker {
     };
 
     async getLatestTasmotaVersion() {
-        try {
             let result = await this.makeHttpsRequest({
                 host: 'api.github.com',
                 path: '/repos/arendst/tasmota/releases/latest',
@@ -62,12 +64,8 @@ export default class TasmotaVersionChecker {
             const info = JSON.parse(result.body);
             const version = this.parseVersionString(info.tag_name);
             if (version !== null)
-                this.app.log(`getLatestTasmotaVersion: Version: ${version.major}.${version.minor}.${version.revision}`);
+                this.app.log(`Latest Tasmota Version on Github: v${version.major}.${version.minor}.${version.revision}`);
             return version;
-        } catch (error) {
-            this.app.log(error);
-            return null;
-        }
     }
 
     saveTasmotaVersion(version: any) {
@@ -78,52 +76,45 @@ export default class TasmotaVersionChecker {
         }
     }
 
-    loadTasmotaVersion() {
-        try {
-            if (!fs.existsSync(latestTasmotaReleaseFilename)) {
-                this.log('loadTasmotaVersion: No version file exists!');
-                return null;
-            }
-            let tempStr = fs.readFileSync(latestTasmotaReleaseFilename, {encoding: 'utf8'});
-            return this.parseVersionString(tempStr);
-        } catch (error) {
-            return null;
+    loadTasmotaVersionFromFile(): { major: number, minor: number, revision: number } {
+        if (!fs.existsSync(latestTasmotaReleaseFilename)) {
+            this.app.log('loadTasmotaVersion: No version file exists!');
+            return {major: 0, minor: 0, revision: 0};
         }
+        let tempStr = fs.readFileSync(latestTasmotaReleaseFilename, {encoding: 'utf8'});
+        return this.parseVersionString(tempStr);
     }
 
     async checkTasmotaReleases() {
-        try {
-            let newVersion = await this.getLatestTasmotaVersion();
-            if (newVersion !== null) {
-                let saveVersion = false;
-                if (this.lastTasmotaVersion === null) {
-                    this.app.log(`Latest Tasmota release detected ${newVersion.major}.${newVersion.minor}.${newVersion.revision} (no saved version found)`);
+        this.app.log(`Checking tasmota releases...`);
+        let newVersion = await this.getLatestTasmotaVersion();
+        if (newVersion !== null) {
+            let saveVersion = false;
+            if (this.lastTasmotaVersion === null) {
+                this.app.log(`Latest Tasmota release detected ${newVersion.major}.${newVersion.minor}.${newVersion.revision} (no saved version found)`);
+                saveVersion = true;
+            } else {
+                let updateAvailable = (this.lastTasmotaVersion.major < newVersion.major) ||
+                    (this.lastTasmotaVersion.major === newVersion.major) && (this.lastTasmotaVersion.minor < newVersion.minor) ||
+                    (this.lastTasmotaVersion.major === newVersion.major) && (this.lastTasmotaVersion.minor === newVersion.minor) && (this.lastTasmotaVersion.revision < newVersion.revision);
+                if (updateAvailable) {
+                    await this.tasmotaUpdateTrigger.trigger({
+                        new_major: newVersion.major,
+                        new_minor: newVersion.minor,
+                        new_revision: newVersion.revision,
+                        old_major: this.lastTasmotaVersion.major,
+                        old_minor: this.lastTasmotaVersion.minor,
+                        old_revision: this.lastTasmotaVersion.revision
+                    });
                     saveVersion = true;
-                } else {
-                    let updateAvailable = (this.lastTasmotaVersion.major < newVersion.major) ||
-                        (this.lastTasmotaVersion.major === newVersion.major) && (this.lastTasmotaVersion.minor < newVersion.minor) ||
-                        (this.lastTasmotaVersion.major === newVersion.major) && (this.lastTasmotaVersion.minor === newVersion.minor) && (this.lastTasmotaVersion.revision < newVersion.revision);
-                    if (updateAvailable) {
-                        await this.tasmotaUpdateTrigger.trigger({
-                            new_major: newVersion.major,
-                            new_minor: newVersion.minor,
-                            new_revision: newVersion.revision,
-                            old_major: this.lastTasmotaVersion.major,
-                            old_minor: this.lastTasmotaVersion.minor,
-                            old_revision: this.lastTasmotaVersion.revision
-                        });
-                        saveVersion = true;
-                        this.log(`New Tasmota version available ${newVersion.major}.${newVersion.minor}.${newVersion.revision} (old ${this.lastTasmotaVersion.major}.${this.lastTasmotaVersion.minor}.${this.lastTasmotaVersion.revision})`);
-                    }
-                }
-                if (saveVersion) {
-                    this.saveTasmotaVersion(newVersion);
-                    this.lastTasmotaVersion = newVersion;
+                    this.app.log(`New Tasmota version available ${newVersion.major}.${newVersion.minor}.${newVersion.revision} (old ${this.lastTasmotaVersion.major}.${this.lastTasmotaVersion.minor}.${this.lastTasmotaVersion.revision})`);
                 }
             }
-        } catch (error) {
-            this.log(`checkTasmotaReleases: ${error}`);
-        }
+            if (saveVersion) {
+                this.saveTasmotaVersion(newVersion);
+                this.lastTasmotaVersion = newVersion;
+            }
+            }
     }
 
     makeHttpsRequest(options: {}, timeout: number): Promise<{ statusCode: number, headers: any, body: any }> {
@@ -141,11 +132,10 @@ export default class TasmotaVersionChecker {
                     }); // resolve the request
                 });
             });
-            request.setTimeout(timeout || this.timeout, () => {
+            request.setTimeout(timeout, () => {
                 request.destroy();
             });
             request.once('error', (e) => {
-                this.lastResponse = e;  // e.g. ECONNREFUSED on wrong port or wrong IP // ECONNRESET on wrong IP
                 return reject(e);
             });
             request.end();
