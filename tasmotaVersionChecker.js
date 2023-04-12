@@ -72,7 +72,7 @@ class TasmotaVersionChecker {
     loadTasmotaVersion() {
         try {
             if (!fs.existsSync(latestTasmotaReleaseFilename)) {
-                this.log('loadTasmotaVersion: No version file exists!');
+                this.app.log('loadTasmotaVersion: No version file exists!');
                 return null;
             }
             let tempStr = fs.readFileSync(latestTasmotaReleaseFilename, {encoding: 'utf8'});
@@ -104,7 +104,7 @@ class TasmotaVersionChecker {
                             old_revision: this.lastTasmotaVersion.revision
                         });
                         saveVersion = true;
-                        this.log(`New Tasmota version available ${newVersion.major}.${newVersion.minor}.${newVersion.revision} (old ${this.lastTasmotaVersion.major}.${this.lastTasmotaVersion.minor}.${this.lastTasmotaVersion.revision})`);
+                        this.app.log(`New Tasmota version available ${newVersion.major}.${newVersion.minor}.${newVersion.revision} (old ${this.lastTasmotaVersion.major}.${this.lastTasmotaVersion.minor}.${this.lastTasmotaVersion.revision})`);
                     }
                 }
                 if (saveVersion) {
@@ -113,7 +113,7 @@ class TasmotaVersionChecker {
                 }
             }
         } catch (error) {
-            this.log(`checkTasmotaReleases: ${error}`);
+            this.app.log(`checkTasmotaReleases: ${error}`);
         }
     }
 
