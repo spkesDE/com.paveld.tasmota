@@ -100,5 +100,11 @@
   },
   "0.11.4": {
     "en": "Bug fixes"
+  },
+  "0.12.0": {
+    "en": "Tasmota typescript rewrite - First test version"
+  },
+  "0.12.1": {
+    "en": "Better device discovery"
   }
 }

@@ -83,11 +83,11 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
                             this.invalidateStatus(this.homey.__('device.unavailable.timeout'));
                         } else if ((this.stage === 'unavailable') && device_valid) {
                             this.setDeviceStatus('available');
-                            this.setAvailable();
+                            await this.setAvailable();
                         }
                     } else if (this.stage === 'unavailable') {
                         this.setDeviceStatus('available');
-                        this.setAvailable();
+                        await this.setAvailable();
                     }
                 } catch (error) {
                     if (this.debug)
@@ -155,7 +155,7 @@ class ZigbeeDevice extends GeneralTasmotaDevice {
                                 if (this.debug)
                                     throw(error);
                                 else
-                                    this.log(`While processing ${messageType}.${sensor}.${sensorField} error happened: ${error}`);
+                                    this.log(`While processing ${sensor}.${sensorField} error happened: ${error}`);
                             }
                         }
                     }
