@@ -8,20 +8,20 @@ const Sensor = require('../../lib/sensor.js');
 const GeneralTasmotaDriver = require('../driver.js');
 
 class TasmotaDeviceDriver extends GeneralTasmotaDriver {
-    
+
     onInit() {
         super.onInit();
         this.registerRunListeners();
     }
-    
-    
+
+
     registerRunListeners() {
         this.homey.flow.getConditionCard('dim_level_greater').registerRunListener((args, state) => {
                 return Promise.resolve(args.device.getCapabilityValue('dim') * 100 > args.value);
             });
         this.homey.flow.getConditionCard('dim_level_lower').registerRunListener((args, state) => {
                 return Promise.resolve(args.device.getCapabilityValue('dim') * 100 < args.value);
-            });   
+        });
         let multiSocketTrigger = this.homey.flow.getDeviceTriggerCard('multiplesockets_relay_state_changed');
         multiSocketTrigger.registerRunListener((args, state) => {
                 return Promise.resolve(((args.socket_id.name === 'any socket') || (args.socket_id.name === state.socket_id.name)) &&
@@ -56,7 +56,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                 }
                 return Promise.resolve(false);
             });
-        let multipleSocketAction = this.homey.flow.getActionCard('multiplesockets_switch_action');         
+        let multipleSocketAction = this.homey.flow.getActionCard('multiplesockets_switch_action');
         multipleSocketAction.registerRunListener((args, state) => {
                 let valueToSend;
                 switch(args.state) {
@@ -70,32 +70,32 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                         valueToSend = 'OFF';
                         break;
                     default:
-                        return Promise.resolve(false);                            
+                        return Promise.resolve(false);
                 }
                 if (args.socket_id.name === 'all sockets')
                 {   for (let socketIndex=1;socketIndex<=args.device.relaysCount;socketIndex++)
-                        args.device.sendTasmotaPowerCommand(socketIndex.toString(),valueToSend); 
+                    args.device.sendTasmotaPowerCommand(socketIndex.toString(), valueToSend);
                     return Promise.resolve(true);
                 }
-                args.device.sendTasmotaPowerCommand(args.socket_id.name.slice(-1),valueToSend); 
+            args.device.sendTasmotaPowerCommand(args.socket_id.name.slice(-1), valueToSend);
                 return Promise.resolve(true);
             });
         multipleSocketAction.getArgument('socket_id').registerAutocompleteListener((query, args) => {
                 return Promise.resolve([{name: 'all sockets'}].concat(args.device.socketsList));
             });
-        this.homey.flow.getConditionCard('fan_speed_greater').registerRunListener((args, state) => {                
+        this.homey.flow.getConditionCard('fan_speed_greater').registerRunListener((args, state) => {
                 return Promise.resolve(args.device.getCapabilityValue("fan_speed") > args.value);
             });
         this.homey.flow.getConditionCard('fan_speed_lower').registerRunListener((args, state) => {
                 return Promise.resolve(args.device.getCapabilityValue("fan_speed") < args.value);
-            });                            
+        });
         this.homey.flow.getActionCard('fan_speed_action').registerRunListener((args, state) => {
                 args.device.sendMessage('FanSpeed', args.value.toString());
                 return Promise.resolve(true);
             });
         this.homey.flow.getConditionCard('singlesocket_switch_turned_on').registerRunListener((args, state) => {
                 return Promise.resolve(args.device.getCapabilityValue('switch.1') === true);
-            });         
+        });
         this.homey.flow.getActionCard('singlesocket_switch_action').registerRunListener((args, state) => {
                 let valueToSend;
                 switch(args.state) {
@@ -109,9 +109,9 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                         valueToSend = 'OFF';
                         break;
                     default:
-                        return Promise.resolve(false);                            
+                        return Promise.resolve(false);
                 }
-                args.device.sendTasmotaPowerCommand('1',valueToSend); 
+            args.device.sendTasmotaPowerCommand('1', valueToSend);
                 return Promise.resolve(true);
             });
         this.homey.flow.getActionCard('zigbee_pair_action').registerRunListener((args, state) => {
@@ -124,7 +124,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                         valueToSend = '0';
                         break;
                     default:
-                        return Promise.resolve(false);                            
+                        return Promise.resolve(false);
                 }
                 args.device.sendMessage('ZbPermitJoin', valueToSend);
                 return Promise.resolve(true);
@@ -142,9 +142,9 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         else
             topic = 'cmnd/' + topic + '/' + command;
         this.sendMessage(topic, '1');
-        return TasmotaDevice; 
+        return TasmotaDevice;
     }
-    
+
     pairingStarted() {
         this.log('pairingStarted called');
         this.sendMessage('cmnd/sonoffs/Status', '0');
@@ -153,7 +153,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
         this.sendMessage('tasmotas/cmnd/Status', '0');
         return true;
     }
-	
+
 	getDefaultIcon(settings, capabilities) {
 		if (capabilities.includes('zigbee_pair'))
 			return 'zigbee_bridge.svg';
@@ -168,24 +168,24 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
 			if (capabilities.includes('dim'))
 				return 'lightbulb.svg';
 			return 'electrical_outlet_1.svg';
-		}		
+        }
 		if (capabilities.includes('additional_sensors'))
 			return 'sensor.svg';
 		return 'tasmota.svg';
 	}
-	
+
     collectedDataToDevice( deviceTopic, messages, swapPrefixTopic) {
         this.log(`collectedDataToDevice: ${JSON.stringify(deviceTopic)} => ${JSON.stringify(messages)}`);
-        let devItem = { 
+        let devItem = {
             settings: {
-                mqtt_topic: deviceTopic, 
-                swap_prefix_topic: swapPrefixTopic, 
-                relays_number: '0', 
-                is_dimmable: 'No', 
-                has_lighttemp: 'No', 
-                has_lightcolor: 'No', 
-                has_fan: 'No', 
-                shutters_number: '0', 
+                mqtt_topic: deviceTopic,
+                swap_prefix_topic: swapPrefixTopic,
+                relays_number: '0',
+                is_dimmable: 'No',
+                has_lighttemp: 'No',
+                has_lightcolor: 'No',
+                has_fan: 'No',
+                shutters_number: '0',
                 chip_type: 'unknown'
             },
             capabilities: [],
@@ -225,8 +225,8 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                 let sensorField = path[path.length - 1];
                 let sensor = "";
                 if (path.length > 1)
-                    sensor = path[path.length - 2]; 
-                let capObj = Sensor.getPropertyObjectForSensorField(path, 'wired', false, sensor);  
+                    sensor = path[path.length - 2];
+                let capObj = Sensor.getPropertyObjectForSensorField(path, 'wired', false, sensor);
                 this.log(`collectedDataToDevice: ${JSON.stringify(path)} => ${JSON.stringify(capObj)}`);
                 if (capObj !== null) {
                     this.log(`getPropertyObjectForSensorField: ${JSON.stringify(capObj)}`);
@@ -248,7 +248,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                     if (sensorField in sensors_settings)
                             sensors_settings[sensorField] = sensors_settings[sensorField] + 1;
                         else
-                            sensors_settings[sensorField] = 1;                                     
+                        sensors_settings[sensorField] = 1;
                 }
                 else if (sensor.startsWith('Shutter')) {
                     shutters++;
@@ -263,8 +263,8 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                         sens_string.push(sitem + ' (x' + sensors_settings[sitem] + ')');
                     else
                         sens_string.push(sitem);
-                devItem.settings.additional_sensors = sens_string.join(', ');   
-                devItem.class = 'sensor';               
+                devItem.settings.additional_sensors = sens_string.join(', ');
+                devItem.class = 'sensor';
             }
             if (shutters > 0)
             {
@@ -322,11 +322,11 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
                     lmCounter++;
                 }
                 if (lmCounter === 2)
-                    capabilities.push('light_mode'); 
+                    capabilities.push('light_mode');
                 if ('FanSpeed' in messages['StatusSTS'][0])
                 {
                     devItem.class = 'fan';
-                    devItem.capabilities.push('fan_speed'); 
+                    devItem.capabilities.push('fan_speed');
                     devItem.settings.has_fan = 'Yes';
                 }
             }
@@ -340,6 +340,7 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
 		devItem.icon = '../../../assets/icons/devices/' + this.getDefaultIcon(devItem.settings, devItem.capabilities);
         if (devItem.capabilities.length <= 1)
             return null;
+        this.log(devItem.capabilities)
         return devItem;
     }
 

@@ -106,5 +106,11 @@
   },
   "0.12.1": {
     "en": "Better device discovery"
+  },
+  "0.12.2": {
+    "en": "(JS Version) Possible fix for convertig values to boolean"
+  },
+  "0.12.3": {
+    "en": "(JS Version) Possible fix for convertig values to boolean"
   }
 }
