@@ -112,5 +112,8 @@
   },
   "0.12.3": {
     "en": "(JS Version) Possible fix for convertig values to boolean"
+  },
+  "0.12.4": {
+    "en": "More logging"
   }
 }
