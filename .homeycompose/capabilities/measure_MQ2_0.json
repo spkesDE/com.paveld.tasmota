@@ -1,0 +1,10 @@
+{
+    "type": "number",
+    "title": {
+        "en": "Gas concentration"
+    },
+    "uiComponent": "sensor",
+    "getable": true,
+    "setable": false,
+    "icon": "assets/icons/capabilities/air_pollution.svg"
+}
