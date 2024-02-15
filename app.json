@@ -24,7 +24,8 @@
     ]
   },
   "permissions": [
-    "homey:app:nl.scanno.mqtt"
+    "homey:app:nl.scanno.mqtt",
+    "homey:manager:api"
   ],
   "images": {
     "small": "/assets/images/small.png",
