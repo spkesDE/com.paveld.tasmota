@@ -1740,6 +1740,20 @@
       },
       "icon": "assets/icons/capabilities/power_meter.svg"
     },
+    "meter_power_out": {
+      "type": "number",
+      "title": {
+        "en": "Power Meter Out"
+      },
+      "uiComponent": "sensor",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "icon": "assets/icons/capabilities/power_meter.svg"
+    },
     "multiplesockets": {
       "type": "boolean",
       "title": {
