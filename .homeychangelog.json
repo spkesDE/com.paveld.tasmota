@@ -118,5 +118,8 @@
   },
   "0.12.5": {
     "en": "MQ2 Support"
+  },
+  "0.13.0": {
+    "en": "Added support for v12.2.0"
   }
 }
