@@ -479,6 +479,10 @@ class TasmotaDevice extends GeneralTasmotaDevice {
                 oldValue = oldValue ? 1 : 0;
             if (typeof newValue === "boolean")
                 newValue = newValue ? 1 : 0;
+            if(!this.sensorTrigger) {
+                this.error('Sensor trigger is not initialized');
+                return false;
+            }
             await this.sensorTrigger.trigger(this, {
                 sensor_name: sensorName,
                 sensor_value_kind: valueKind,
