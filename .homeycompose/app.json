@@ -1,6 +1,6 @@
 {
   "id": "com.paveld.tasmota",
-  "version": "0.12.5",
+  "version": "0.13.2",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#42A3E9",
@@ -39,6 +39,10 @@
       {
         "name": "Pavlo Dudnytskyi",
         "email": "paveldudn@gmail.com"
+      },
+      {
+        "name": "Shaarkys",
+        "email": ""
       }
     ]
   },

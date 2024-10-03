@@ -1,0 +1,14 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Power Meter Out"
+  },
+  "uiComponent": "sensor",
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "units": {
+    "en": "kWh"
+  },
+  "icon": "assets/icons/capabilities/power_meter.svg"
+}
