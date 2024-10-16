@@ -15,6 +15,7 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         this.shuttersNubmber = parseInt(settings.shutters_number);
         this.sockets = [];
         this.socketsList = [];
+        this.sensorTrigger = this.homey.flow.getDeviceTriggerCard('sensor_value_changed');
         // Legacy devices conversion
         for (let i = 1; i <= this.relaysCount; i++) {
             this.sockets.push(false);
@@ -35,7 +36,6 @@ class TasmotaDevice extends GeneralTasmotaDevice {
         if (this.additionalSensors) {
             if (!this.hasCapability('additional_sensors'))
                 await this.addCapability('additional_sensors');
-            this.sensorTrigger = this.homey.flow.getDeviceTriggerCard('sensor_value_changed');
         }
         this.onOffList = this.getCapabilities().filter(cap => cap.startsWith('switch.'));
         if (this.onOffList.length > 0) {
