@@ -6,5 +6,6 @@
     "getable": true,
     "setable": true,
     "uiComponent": "toggle",
-    "uiQuickAction": false
+    "uiQuickAction": false,
+	"insights": true
 }
