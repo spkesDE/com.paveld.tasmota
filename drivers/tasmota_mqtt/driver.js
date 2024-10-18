@@ -14,30 +14,6 @@ class TasmotaDeviceDriver extends GeneralTasmotaDriver {
   }
 
   registerRunListeners() {
-    // Condition Card: On
-    this.homey.flow.getConditionCard("on").registerRunListener((args, state) => {
-      return Promise.resolve(args.device.getCapabilityValue("onoff"));
-    });
-
-    // Action Card: On
-    this.homey.flow.getActionCard("on").registerRunListener((args, state) => {
-      args.device.setCapabilityValue("onoff", true).catch(this.error);
-      return Promise.resolve(true);
-    });
-
-    // Action Card: Off
-    this.homey.flow.getActionCard("off").registerRunListener((args, state) => {
-      args.device.setCapabilityValue("onoff", false).catch(this.error);
-      return Promise.resolve(true);
-    });
-
-    // Action Card: Toggle
-    this.homey.flow.getActionCard("toggle").registerRunListener((args, state) => {
-      const value = args.device.getCapabilityValue("onoff");
-      args.device.setCapabilityValue("onoff", !value).catch(this.error);
-      return Promise.resolve(true);
-    });
-
     this.homey.flow.getConditionCard("dim_level_greater").registerRunListener((args, state) => {
       return Promise.resolve(args.device.getCapabilityValue("dim") * 100 > args.value);
     });
