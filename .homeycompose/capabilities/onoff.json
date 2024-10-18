@@ -6,6 +6,34 @@
     "getable": true,
     "setable": true,
     "uiComponent": null,
-	"insights": true,
-    "uiQuickAction": true
+    "insights": true,
+    "uiQuickAction": true,
+    "insightsTitleTrue": {
+        "en": "Turned on",
+        "nl": "Aangezet",
+        "de": "Angeschaltet",
+        "fr": "Activé",
+        "it": "Attivato",
+        "sv": "Aktiverad",
+        "no": "Slått på",
+        "es": "Encendido",
+        "da": "Tændt",
+        "ru": "Включено",
+        "pl": "Włączone",
+        "ko": "켜짐"
+    },
+    "insightsTitleFalse": {
+        "en": "Turned off",
+        "nl": "Uitgezet",
+        "de": "Ausgeschaltet",
+        "fr": "Désactivé",
+        "it": "Disattivato",
+        "sv": "Inaktiverad",
+        "no": "Slått av",
+        "es": "Apagado",
+        "da": "Slukket",
+        "ru": "Выключено",
+        "pl": "Wyłączone",
+        "ko": "꺼짐"
+    }
 }
